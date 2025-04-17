@@ -35,13 +35,14 @@ export const StatusIndicator = ({
           "rounded-md flex items-center justify-center font-mono font-bold text-white shadow-md transition-all duration-300 hover:scale-105",
           sizeClasses[size],
           statusColors[statusValue],
+          "dark:shadow-lg dark:shadow-status-1/10"
         )}
       >
         {statusValue}
       </div>
       {showGlow && (
         <div className={cn(
-          "absolute -inset-0.5 rounded-md blur-sm opacity-50",
+          "absolute -inset-0.5 rounded-md blur-sm opacity-50 dark:opacity-70",
           statusColors[statusValue],
         )}></div>
       )}

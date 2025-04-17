@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,9 +7,12 @@
     <title>Project Pulse</title>
     <meta name="description" content="A simple project status tracking tool for project owners" />
     <meta name="author" content="Lovable" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#0f172a" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
 
-    <meta property="og:title" content="project-pulse-check-app" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:title" content="Project Pulse" />
+    <meta property="og:description" content="A simple project status tracking tool for project owners" />
     <meta property="og:type" content="website" />
     <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
@@ -22,5 +26,14 @@
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((reg) => console.log('Service worker registered:', reg))
+            .catch((err) => console.log('Service worker registration failed:', err));
+        });
+      }
+    </script>
   </body>
 </html>

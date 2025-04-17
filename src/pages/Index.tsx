@@ -4,7 +4,8 @@ import { Project } from "@/types";
 import { loadProjects, saveProjects } from "@/utils/storageUtils";
 import { ProjectCard } from "@/components/ProjectCard";
 import { NewProjectDialog } from "@/components/NewProjectDialog";
-import { Rocket, Zap } from "lucide-react";
+import { Zap } from "lucide-react";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const Index = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -33,16 +34,13 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-background/95">
+    <div className="min-h-screen bg-gradient-to-br from-background to-background/95 dark:from-background dark:to-background/90 transition-colors duration-1000">
       <div className="container py-8 max-w-4xl mx-auto px-4">
         <header className="mb-10 text-center">
           <div className="inline-flex items-center justify-center mb-4">
-            <div className="relative">
-              <Rocket className="h-12 w-12 text-primary" />
-              <div className="absolute -inset-1 blur-md rounded-full bg-primary opacity-20"></div>
-            </div>
+            <ThemeToggle />
           </div>
-          <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary">
+          <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary dark:from-primary dark:via-primary/80 dark:to-primary/60">
             Project Pulse
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mx-auto">

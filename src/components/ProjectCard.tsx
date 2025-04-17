@@ -1,22 +1,55 @@
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, User, Users, Zap, Rocket, Edit, Check } from "lucide-react";
+import { ChevronDown, ChevronUp, User, Users, Zap, Edit, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Project, StatusLevel, User as UserType, getProjectStats } from "@/types";
 import { StatusSelector } from "./StatusSelector";
-import { StatusIndicator } from "./StatusIndicator";
 import { getCurrentDate, getCurrentMonth } from "@/utils/dateUtils";
 import { Progress } from "./ui/progress";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback } from "./ui/avatar";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { 
+  faRocket, 
+  faAtom, 
+  faBrain, 
+  faCode, 
+  faDatabase, 
+  faFire, 
+  faGlobe,
+  faLaptopCode, 
+  faMicrochip, 
+  faMountain, 
+  faPuzzlePiece,
+  faRobot, 
+  faSatellite
+} from "@fortawesome/free-solid-svg-icons";
+import * as freeSolidIcons from "@fortawesome/free-solid-svg-icons";
 
 interface ProjectCardProps {
   project: Project;
   onUpdate: (updatedProject: Project) => void;
 }
+
+// Map of default icons to use when no custom icon is set
+const iconMap = {
+  default: faRocket,
+  atom: faAtom,
+  brain: faBrain,
+  code: faCode,
+  database: faDatabase,
+  fire: faFire,
+  globe: faGlobe,
+  laptop: faLaptopCode,
+  chip: faMicrochip,
+  mountain: faMountain,
+  puzzle: faPuzzlePiece,
+  robot: faRobot,
+  satellite: faSatellite
+};
 
 export const ProjectCard = ({ project, onUpdate }: ProjectCardProps) => {
   const [expanded, setExpanded] = useState(false);
@@ -27,6 +60,16 @@ export const ProjectCard = ({ project, onUpdate }: ProjectCardProps) => {
 
   // Calculate project statistics
   const { userCount, dailyStatusSum, averageStatus } = getProjectStats(project, currentDate);
+  
+  // Get the correct icon
+  const getProjectIcon = () => {
+    if (!project.icon) return iconMap.default;
+    
+    // Try to find the icon in the imported FA library
+    const iconName = `fa${project.icon.charAt(0).toUpperCase() + project.icon.slice(1)}`;
+    const selectedIcon = (freeSolidIcons as any)[iconName];
+    return selectedIcon || iconMap.default;
+  };
   
   // Determine background gradient based on average status
   const getCardStyle = () => {
@@ -121,62 +164,49 @@ export const ProjectCard = ({ project, onUpdate }: ProjectCardProps) => {
   };
 
   return (
-    <Card style={getCardStyle()} className="transition-all duration-300 hover:shadow-lg border-none backdrop-blur-sm">
+    <Card style={getCardStyle()} className="transition-all duration-300 hover:shadow-lg border-none backdrop-blur-sm dark:bg-black/20">
       <CardHeader 
-        className="cursor-pointer rounded-t-lg backdrop-blur-sm" 
+        className="cursor-pointer rounded-t-lg backdrop-blur-sm py-4" 
         onClick={toggleExpanded}
       >
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <Rocket className="h-6 w-6 text-primary" />
-            <CardTitle className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+            <div className="relative h-6 w-6 flex items-center justify-center text-primary dark:text-primary">
+              <FontAwesomeIcon icon={getProjectIcon()} className="h-5 w-5" />
+              <div className="absolute inset-0 blur-md rounded-full bg-primary/10 dark:bg-primary/20"></div>
+            </div>
+            <CardTitle className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent dark:from-primary dark:to-primary/60">
               {project.name}
             </CardTitle>
           </div>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            {expanded ? <ChevronUp className="text-primary" /> : <ChevronDown className="text-primary" />}
-          </Button>
-        </div>
-        <CardDescription className="mt-2 text-muted-foreground">{project.description}</CardDescription>
-        
-        <div className="flex items-center justify-between mt-4 text-sm">
-          <div className="flex items-center space-x-2">
-            <Badge variant="outline" className="flex items-center gap-1 bg-background/70 backdrop-blur-sm">
-              <Users className="h-3.5 w-3.5" />
-              <span>{userCount}</span>
-            </Badge>
-            
-            <Badge variant="outline" className="flex items-center gap-1 bg-background/70 backdrop-blur-sm">
-              <Zap className="h-3.5 w-3.5" />
-              <span>Points: {dailyStatusSum}</span>
-            </Badge>
-          </div>
           
-          {averageStatus > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Average:</span>
-              <Badge 
-                className={cn(
-                  "font-mono",
-                  averageStatus >= 4 ? "bg-status-5" : 
-                  averageStatus >= 3 ? "bg-status-4" : 
-                  averageStatus >= 2 ? "bg-status-3" : 
-                  averageStatus >= 1 ? "bg-status-2" : "bg-status-1"
-                )}
-              >
-                {averageStatus.toFixed(1)}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center space-x-2">
+              <Badge variant="outline" className="flex items-center gap-1 bg-background/70 backdrop-blur-sm dark:bg-black/30">
+                <Users className="h-3.5 w-3.5" />
+                <span>{userCount}</span>
+              </Badge>
+              
+              <Badge variant="outline" className="flex items-center gap-1 bg-background/70 backdrop-blur-sm dark:bg-black/30">
+                <Zap className="h-3.5 w-3.5" />
+                <span>{dailyStatusSum}</span>
               </Badge>
             </div>
-          )}
+            
+            <Button variant="ghost" size="icon" className="rounded-full">
+              {expanded ? <ChevronUp className="text-primary" /> : <ChevronDown className="text-primary" />}
+            </Button>
+          </div>
         </div>
+        <CardDescription className="mt-2 text-muted-foreground">{project.description}</CardDescription>
       </CardHeader>
       
       {expanded && (
         <CardContent className="space-y-6 pt-4">
-          <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-muted/50 to-transparent mb-4"></div>
+          <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-muted/50 to-transparent mb-4 dark:via-muted/20"></div>
           
           {project.users.length === 0 ? (
-            <div className="text-center py-8 border border-dashed rounded-lg border-muted-foreground/20 bg-background/50 backdrop-blur-sm">
+            <div className="text-center py-8 border border-dashed rounded-lg border-muted-foreground/20 bg-background/50 backdrop-blur-sm dark:bg-black/20">
               <Users className="w-12 h-12 mx-auto text-muted-foreground/50 mb-2" />
               <p className="text-muted-foreground">No users assigned to this project</p>
               <p className="text-xs text-muted-foreground/70 mt-1">Add users to start tracking status</p>
@@ -190,12 +220,12 @@ export const ProjectCard = ({ project, onUpdate }: ProjectCardProps) => {
                 return (
                   <div 
                     key={user.id} 
-                    className="rounded-lg border border-muted/40 bg-background/60 backdrop-blur-sm p-4 transition-all hover:shadow-md"
+                    className="rounded-lg border border-muted/40 bg-background/60 backdrop-blur-sm p-4 transition-all hover:shadow-md dark:bg-black/20 dark:border-muted/20"
                   >
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Avatar>
-                          <AvatarFallback className="bg-primary/10 text-primary">
+                          <AvatarFallback className="bg-primary/10 text-primary dark:bg-primary/20">
                             {user.username.substring(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
@@ -206,7 +236,7 @@ export const ProjectCard = ({ project, onUpdate }: ProjectCardProps) => {
                               <Input 
                                 value={noteText}
                                 onChange={(e) => setNoteText(e.target.value)}
-                                className="h-6 text-xs py-1 px-2 bg-background/80"
+                                className="h-6 text-xs py-1 px-2 bg-background/80 dark:bg-black/40"
                                 placeholder="Add status note..."
                               />
                               <Button 
@@ -247,7 +277,7 @@ export const ProjectCard = ({ project, onUpdate }: ProjectCardProps) => {
                         
                         <div className="space-y-1 min-w-[80px]">
                           <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-                            <span>Month</span>
+                            <span>Points</span>
                             <span className="font-mono font-semibold">{monthlyStatus}</span>
                           </div>
                           <div className="relative">
@@ -277,10 +307,6 @@ export const ProjectCard = ({ project, onUpdate }: ProjectCardProps) => {
           )}
         </CardContent>
       )}
-      
-      <CardFooter className="text-xs text-muted-foreground/70 italic p-4 pt-0">
-        Created: {new Date(project.createdAt).toLocaleDateString()}
-      </CardFooter>
     </Card>
   );
 };

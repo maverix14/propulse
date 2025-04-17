@@ -15,6 +15,7 @@ export interface Project {
   description: string;
   users: User[];
   createdAt: string;
+  icon?: string; // Optional Font Awesome icon name
 }
 
 export type StatusLevel = 1 | 2 | 3 | 4 | 5;
