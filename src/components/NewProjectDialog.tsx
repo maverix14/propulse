@@ -5,8 +5,8 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { Project } from "@/types";
-import { Plus } from "lucide-react";
+import { Project, User } from "@/types";
+import { Plus, UserPlus, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 
@@ -51,6 +51,8 @@ export const NewProjectDialog = ({ onProjectCreate }: NewProjectDialogProps) => 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [iconName, setIconName] = useState("rocket");
+  const [users, setUsers] = useState<User[]>([]);
+  const [newUsername, setNewUsername] = useState("");
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +63,7 @@ export const NewProjectDialog = ({ onProjectCreate }: NewProjectDialogProps) => 
       id: uuidv4(),
       name: name.trim(),
       description: description.trim(),
-      users: [],
+      users: users,
       createdAt: new Date().toISOString(),
       icon: iconName
     };
@@ -75,6 +77,27 @@ export const NewProjectDialog = ({ onProjectCreate }: NewProjectDialogProps) => 
     setName("");
     setDescription("");
     setIconName("rocket");
+    setUsers([]);
+    setNewUsername("");
+  };
+  
+  const addUser = () => {
+    if (!newUsername.trim()) return;
+    
+    const newUser: User = {
+      id: uuidv4(),
+      username: newUsername.trim(),
+      dailyStatus: {},
+      monthlyStatus: {},
+      note: ""
+    };
+    
+    setUsers([...users, newUser]);
+    setNewUsername("");
+  };
+  
+  const removeUser = (userId: string) => {
+    setUsers(users.filter(user => user.id !== userId));
   };
   
   return (
@@ -129,6 +152,48 @@ export const NewProjectDialog = ({ onProjectCreate }: NewProjectDialogProps) => 
                   </Button>
                 ))}
               </div>
+            </div>
+            
+            {/* User Assignment Section */}
+            <div className="grid gap-2">
+              <Label htmlFor="users">Assign Users</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="new-user"
+                  placeholder="Enter username"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  type="button" 
+                  size="sm"
+                  variant="outline"
+                  onClick={addUser}
+                >
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* User List */}
+              {users.length > 0 && (
+                <div className="mt-2 space-y-2 max-h-[150px] overflow-y-auto border rounded-md p-2">
+                  {users.map(user => (
+                    <div key={user.id} className="flex justify-between items-center py-1 px-2 bg-muted/40 rounded">
+                      <span className="text-sm">{user.username}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeUser(user.id)}
+                        className="h-6 w-6 p-0"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
           <DialogFooter>
