@@ -18,3 +18,24 @@ export interface Project {
 }
 
 export type StatusLevel = 1 | 2 | 3 | 4 | 5;
+
+// Helper functions to compute project statistics
+export const getProjectStats = (project: Project, currentDate: string) => {
+  const userCount = project.users.length;
+  
+  // Calculate sum of today's statuses
+  const dailyStatusSum = project.users.reduce((sum, user) => {
+    return sum + (user.dailyStatus?.[currentDate] || 0);
+  }, 0);
+
+  // Calculate average status (if there are users)
+  const averageStatus = userCount > 0 
+    ? Math.round((dailyStatusSum / userCount) * 10) / 10 
+    : 0;
+
+  return {
+    userCount,
+    dailyStatusSum,
+    averageStatus,
+  };
+};

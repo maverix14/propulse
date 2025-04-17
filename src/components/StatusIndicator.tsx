@@ -24,14 +24,20 @@ export const StatusIndicator = ({ value, size = "md" }: StatusIndicatorProps) =>
   };
 
   return (
-    <div 
-      className={cn(
-        "rounded-full flex items-center justify-center font-semibold text-white",
-        sizeClasses[size],
-        statusColors[statusValue]
-      )}
-    >
-      {statusValue}
+    <div className="relative">
+      <div 
+        className={cn(
+          "rounded-md flex items-center justify-center font-mono font-bold text-white shadow-md transition-all duration-300 hover:scale-105",
+          sizeClasses[size],
+          statusColors[statusValue],
+        )}
+      >
+        {statusValue}
+      </div>
+      <div className={cn(
+        "absolute -inset-0.5 rounded-md blur-sm opacity-50",
+        statusColors[statusValue],
+      )}></div>
     </div>
   );
 };
