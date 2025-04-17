@@ -99,3 +99,21 @@
     @apply bg-background text-foreground;
   }
 }
+
+@layer utilities {
+  .status-1 {
+    @apply bg-status-1 text-white;
+  }
+  .status-2 {
+    @apply bg-status-2 text-white;
+  }
+  .status-3 {
+    @apply bg-status-3 text-black;
+  }
+  .status-4 {
+    @apply bg-status-4 text-white;
+  }
+  .status-5 {
+    @apply bg-status-5 text-white;
+  }
+}
