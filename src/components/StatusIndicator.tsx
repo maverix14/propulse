@@ -4,9 +4,14 @@ import { cn } from "@/lib/utils";
 interface StatusIndicatorProps {
   value: number;
   size?: "sm" | "md" | "lg";
+  showGlow?: boolean;
 }
 
-export const StatusIndicator = ({ value, size = "md" }: StatusIndicatorProps) => {
+export const StatusIndicator = ({ 
+  value, 
+  size = "md", 
+  showGlow = true 
+}: StatusIndicatorProps) => {
   const statusValue = Math.max(1, Math.min(5, Math.round(value))) as 1 | 2 | 3 | 4 | 5;
   
   const sizeClasses = {
@@ -34,10 +39,12 @@ export const StatusIndicator = ({ value, size = "md" }: StatusIndicatorProps) =>
       >
         {statusValue}
       </div>
-      <div className={cn(
-        "absolute -inset-0.5 rounded-md blur-sm opacity-50",
-        statusColors[statusValue],
-      )}></div>
+      {showGlow && (
+        <div className={cn(
+          "absolute -inset-0.5 rounded-md blur-sm opacity-50",
+          statusColors[statusValue],
+        )}></div>
+      )}
     </div>
   );
 };

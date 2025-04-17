@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, User, Users, Zap, Rocket } from "lucide-react";
+import { ChevronDown, ChevronUp, User, Users, Zap, Rocket, Edit, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -20,6 +20,8 @@ interface ProjectCardProps {
 
 export const ProjectCard = ({ project, onUpdate }: ProjectCardProps) => {
   const [expanded, setExpanded] = useState(false);
+  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState<string>("");
   const currentDate = getCurrentDate();
   const currentMonth = getCurrentMonth();
 
@@ -80,6 +82,16 @@ export const ProjectCard = ({ project, onUpdate }: ProjectCardProps) => {
       ...project,
       users: updatedUsers
     });
+  };
+
+  const startEditingNote = (userId: string, note: string) => {
+    setEditingNote(userId);
+    setNoteText(note || "");
+  };
+
+  const saveNote = (userId: string) => {
+    handleNoteChange(userId, noteText);
+    setEditingNote(null);
   };
 
   const handleNoteChange = (userId: string, note: string) => {
@@ -180,74 +192,82 @@ export const ProjectCard = ({ project, onUpdate }: ProjectCardProps) => {
                     key={user.id} 
                     className="rounded-lg border border-muted/40 bg-background/60 backdrop-blur-sm p-4 transition-all hover:shadow-md"
                   >
-                    <div className="flex items-center gap-3 mb-4">
-                      <Avatar>
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {user.username.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-medium">{user.username}</h3>
-                        <p className="text-xs text-muted-foreground">
-                          Month points: {monthlyStatus}
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Today's Status</span>
-                          <div className="flex -space-x-1">
-                            {[1, 2, 3, 4, 5].map((level) => (
-                              <div 
-                                key={level}
-                                className={cn(
-                                  "w-5 h-5 rounded-sm border-2 border-background",
-                                  level <= dailyStatus 
-                                    ? `bg-status-${level} animate-[scale-in_0.2s_ease-out]` 
-                                    : "bg-muted/20"
-                                )}
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {user.username.substring(0, 2).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <h3 className="font-medium">{user.username}</h3>
+                          {editingNote === user.id ? (
+                            <div className="flex items-center mt-1">
+                              <Input 
+                                value={noteText}
+                                onChange={(e) => setNoteText(e.target.value)}
+                                className="h-6 text-xs py-1 px-2 bg-background/80"
+                                placeholder="Add status note..."
                               />
-                            ))}
+                              <Button 
+                                size="icon" 
+                                variant="ghost" 
+                                className="h-6 w-6 ml-1" 
+                                onClick={() => saveNote(user.id)}
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div 
+                              className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer hover:text-foreground transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEditingNote(user.id, user.note || "");
+                              }}
+                            >
+                              <span>{user.note ? user.note : "Add status note..."}</span>
+                              <Edit className="h-3 w-3 opacity-60" />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-6">
+                        <div className="space-y-1">
+                          <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                            <span>Daily</span>
+                            <span className="font-mono">{dailyStatus}/5</span>
+                          </div>
+                          <StatusSelector 
+                            value={dailyStatus}
+                            onChange={(value) => handleStatusChange(user.id, value)}
+                          />
+                        </div>
+                        
+                        <div className="space-y-1 min-w-[80px]">
+                          <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                            <span>Month</span>
+                            <span className="font-mono font-semibold">{monthlyStatus}</span>
+                          </div>
+                          <div className="relative">
+                            <Progress 
+                              value={Math.min(100, (monthlyStatus / 150) * 100)} 
+                              className="h-1"
+                            />
+                            <div className="grid grid-cols-5 gap-0.5 absolute inset-0 -top-1">
+                              {[0, 30, 60, 90, 120].map((threshold, i) => (
+                                <div 
+                                  key={i} 
+                                  className={cn(
+                                    "h-3 w-0.5 mx-auto rounded-full opacity-50",
+                                    monthlyStatus >= threshold ? `bg-status-${i+1}` : "bg-muted/20"
+                                  )}
+                                />
+                              ))}
+                            </div>
                           </div>
                         </div>
-                        <StatusSelector 
-                          value={dailyStatus}
-                          onChange={(value) => handleStatusChange(user.id, value)}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                          <span className="text-sm text-muted-foreground">Monthly Total</span>
-                          <span className="text-xl font-mono font-bold">{monthlyStatus}</span>
-                        </div>
-                        <Progress 
-                          value={Math.min(100, (monthlyStatus / 150) * 100)} 
-                          className="h-2"
-                        />
-                        <div className="grid grid-cols-5 gap-1 mt-1">
-                          {[0, 30, 60, 90, 120].map((threshold, i) => (
-                            <div 
-                              key={i} 
-                              className={cn(
-                                "h-1 rounded-full",
-                                monthlyStatus >= threshold ? `bg-status-${i+1}` : "bg-muted/20"
-                              )}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <span className="text-sm text-muted-foreground">Note</span>
-                        <Input
-                          value={user.note || ""}
-                          onChange={(e) => handleNoteChange(user.id, e.target.value)}
-                          placeholder="Add a note..."
-                          className="bg-background/50 backdrop-blur-sm border-muted/30 focus-visible:ring-primary/30"
-                        />
                       </div>
                     </div>
                   </div>
