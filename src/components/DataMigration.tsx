@@ -1,4 +1,3 @@
-
 import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -6,13 +5,14 @@ import { loadProjects } from '@/utils/storageUtils';
 import { useToast } from '@/hooks/use-toast';
 
 export const DataMigration = () => {
-  const { user } = useAuth();
+  const { user, isGuest } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    const migrateData = async () => {
-      if (!user) return;
+    // Skip migration for guest users
+    if (isGuest || !user) return;
 
+    const migrateData = async () => {
       try {
         const localProjects = loadProjects();
         if (localProjects.length === 0) return;
@@ -36,7 +36,12 @@ export const DataMigration = () => {
         }
 
         // Clear local storage after successful migration
+        // We want to keep the isGuestMode flag
+        const isGuestMode = localStorage.getItem('isGuestMode');
         localStorage.clear();
+        if (isGuestMode) {
+          localStorage.setItem('isGuestMode', isGuestMode);
+        }
         
         toast({
           title: "Data Migration Complete",
@@ -53,7 +58,7 @@ export const DataMigration = () => {
     };
 
     migrateData();
-  }, [user]);
+  }, [user, isGuest, toast]);
 
   return null;
 };

@@ -11,12 +11,19 @@ import { DataMigration } from "./components/DataMigration";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session } = useAuth();
-  return session ? children : <Navigate to="/auth" />;
+  const { session, isGuest, isInitialized } = useAuth();
+  
+  // Show loading or similar until authentication is initialized
+  if (!isInitialized) {
+    return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  }
+  
+  return (session || isGuest) ? children : <Navigate to="/auth" />;
 };
 
 const App = () => (
@@ -30,6 +37,11 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               <Route path="/auth" element={<Auth />} />
+              <Route path="/settings" element={
+                <PrivateRoute>
+                  <Settings />
+                </PrivateRoute>
+              } />
               <Route path="/" element={
                 <PrivateRoute>
                   <Index />

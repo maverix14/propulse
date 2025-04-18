@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Users, Zap, Edit, Trash, X, Check, Shield, AlertTriangle, Pencil, Github } from "lucide-react";
+import { ChevronDown, ChevronUp, Users, Zap, Edit, Trash, X, Check, Shield, AlertTriangle, Pencil, Github, Info, Settings } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Project, StatusLevel, User as UserType, UserLevel, getProjectStats, hasReachedDailyLimit, hasReachedMonthlyLimit } from "@/types";
@@ -53,6 +53,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { NewProjectDialog } from "./NewProjectDialog";
+import { ProjectNotes } from "./ProjectNotes";
 
 const iconMap = {
   default: faRocket,
@@ -234,9 +235,9 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   const getUserLevelBadge = (level: UserLevel) => {
     return (
       <Badge variant={level === UserLevel.Level1 ? "outline" : "secondary"} 
-        className="ml-2 text-xs flex items-center gap-1">
+        className="ml-2 text-xs flex items-center">
         <Shield className="h-3 w-3" />
-        Level {level}
+        {level}
       </Badge>
     );
   };
@@ -314,6 +315,8 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                 )}
               </div>
               
+              <ProjectNotes project={project} onUpdate={onUpdate} isExpanded={false} />
+              
               <Button variant="ghost" size="icon" className="rounded-full">
                 {expanded ? <ChevronUp className="text-primary" /> : <ChevronDown className="text-primary" />}
               </Button>
@@ -353,6 +356,8 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                 <Trash className="h-4 w-4" /> Delete
               </Button>
             </div>
+            
+            <ProjectNotes project={project} onUpdate={onUpdate} isExpanded={true} />
             
             {project.users.length === 0 ? (
               <div className="text-center py-8 border border-dashed rounded-lg border-muted-foreground/20 bg-background/50 backdrop-blur-sm dark:bg-black/20">
@@ -505,21 +510,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                               </div>
                             </div>
                           </div>
-                          
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => {
-                              const updatedProject = {
-                                ...project,
-                                users: project.users.filter(u => u.id !== user.id)
-                              };
-                              onUpdate(updatedProject);
-                            }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
                         </div>
                       </div>
                     </div>

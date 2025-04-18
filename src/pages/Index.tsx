@@ -1,26 +1,109 @@
+
 import { useEffect, useState } from "react";
 import { Project } from "@/types";
-import { loadProjects, saveProjects, syncUserAcrossProjects } from "@/utils/storageUtils";
+import { loadProjects, saveProjects } from "@/utils/storageUtils";
 import { ProjectCard } from "@/components/ProjectCard";
 import { NewProjectDialog } from "@/components/NewProjectDialog";
-import { Zap } from "lucide-react";
+import { Zap, Settings, Info } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { 
+  Tooltip, 
+  TooltipContent, 
+  TooltipProvider, 
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 const Index = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const { toast } = useToast();
+  const { user, signOut, isGuest } = useAuth();
+  const navigate = useNavigate();
 
+  // Load projects from the appropriate source based on auth status
   useEffect(() => {
-    const storedProjects = loadProjects();
-    setProjects(storedProjects);
-  }, []);
+    const loadUserProjects = async () => {
+      if (isGuest) {
+        // Load from local storage for guest users
+        const storedProjects = loadProjects();
+        setProjects(storedProjects);
+      } else if (user) {
+        // Load from Supabase for authenticated users
+        try {
+          const { data, error } = await supabase
+            .from('projects')
+            .select('*')
+            .eq('created_by', user.id);
+            
+          if (error) throw error;
+          
+          if (data && data.length > 0) {
+            setProjects(data as Project[]);
+          } else {
+            // If no projects in DB, try loading from local storage
+            const storedProjects = loadProjects();
+            setProjects(storedProjects);
+          }
+        } catch (error) {
+          console.error('Failed to load projects:', error);
+          toast({
+            title: "Error loading projects",
+            description: "Failed to load your projects from the database",
+            variant: "destructive"
+          });
+          
+          // Fallback to local storage
+          const storedProjects = loadProjects();
+          setProjects(storedProjects);
+        }
+      }
+    };
+    
+    loadUserProjects();
+  }, [user, isGuest, toast]);
 
+  // Save projects to the appropriate location
   useEffect(() => {
-    saveProjects(projects);
-  }, [projects]);
+    const saveUserProjects = async () => {
+      if (projects.length === 0) return;
+      
+      if (isGuest) {
+        // Save to local storage for guest users
+        saveProjects(projects);
+      } else if (user) {
+        // Save to Supabase for authenticated users
+        try {
+          // First, save to local storage as backup
+          saveProjects(projects);
+          
+          // Then try to save to Supabase
+          for (const project of projects) {
+            const { error } = await supabase
+              .from('projects')
+              .upsert({
+                id: project.id,
+                name: project.name,
+                description: project.description,
+                created_by: user.id,
+                note: project.note
+              });
+              
+            if (error) {
+              console.error('Error saving project to Supabase:', error);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to save projects to Supabase:', error);
+        }
+      }
+    };
+    
+    saveUserProjects();
+  }, [projects, user, isGuest]);
 
   const handleProjectCreate = (newProject: Project) => {
     setProjects([...projects, newProject]);
@@ -36,12 +119,28 @@ const Index = () => {
         project.id === updatedProject.id ? updatedProject : project
       )
     );
-    
-    // No need to show a toast here as most updates already show toasts
   };
 
   const handleProjectDelete = (projectId: string) => {
-    setProjects(projects.filter((project) => project.id !== projectId));
+    const deleteProject = async () => {
+      setProjects(projects.filter((project) => project.id !== projectId));
+      
+      if (user) {
+        try {
+          const { error } = await supabase
+            .from('projects')
+            .delete()
+            .eq('id', projectId);
+            
+          if (error) throw error;
+        } catch (error) {
+          console.error('Failed to delete project from Supabase:', error);
+        }
+      }
+    };
+    
+    deleteProject();
+    
     toast({
       title: "Project deleted",
       description: "Your project has been deleted successfully.",
@@ -49,11 +148,10 @@ const Index = () => {
     });
   };
 
-  const { signOut } = useAuth();
-
   const handleSignOut = async () => {
     try {
       await signOut();
+      navigate('/auth');
     } catch (error: any) {
       toast({
         title: "Error",
@@ -70,15 +168,23 @@ const Index = () => {
           <div className="inline-flex items-center justify-center gap-4 mb-4">
             <ThemeToggle />
             <Button variant="outline" onClick={handleSignOut}>
-              Sign Out
+              {isGuest ? "Back to Login" : "Sign Out"}
             </Button>
           </div>
           <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary dark:from-primary dark:via-primary/80 dark:to-primary/60">
-            Project Pulse
+            <span className="inline-flex items-center">
+              <Zap className="w-10 h-10 mr-2 animate-pulse-slow text-primary" />
+              Project Pulse
+            </span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mx-auto">
             Track your projects' daily and monthly status with a futuristic approach
           </p>
+          {isGuest && (
+            <div className="mt-2 text-sm text-amber-500 dark:text-amber-400 font-medium">
+              Guest Mode: Data is stored locally
+            </div>
+          )}
         </header>
 
         <div className="mb-6 flex justify-center">
@@ -106,6 +212,52 @@ const Index = () => {
           )}
         </div>
       </div>
+      
+      <footer className="py-6 border-t border-border/40 mt-10">
+        <div className="container max-w-4xl mx-auto px-4">
+          <div className="flex justify-center items-center gap-4">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => navigate('/settings')}
+                    className="rounded-full"
+                  >
+                    <Settings className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Settings</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+            
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => {
+                      toast({
+                        title: "Project Pulse",
+                        description: "Version 1.0.0 - Track your projects' status with ease"
+                      });
+                    }}
+                  >
+                    <Info className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>About</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
+          <p className="text-center text-xs text-muted-foreground mt-4">
+            Project Pulse v1.0.0
+          </p>
+        </div>
+      </footer>
     </div>
   );
 };
