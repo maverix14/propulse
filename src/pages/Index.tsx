@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Project } from "@/types";
 import { loadProjects, saveProjects, syncUserAcrossProjects } from "@/utils/storageUtils";
@@ -7,6 +6,8 @@ import { NewProjectDialog } from "@/components/NewProjectDialog";
 import { Zap } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -48,12 +49,29 @@ const Index = () => {
     });
   };
 
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-background/95 dark:from-background dark:to-background/90 transition-colors duration-1000">
       <div className="container py-8 max-w-4xl mx-auto px-4">
         <header className="mb-10 text-center">
-          <div className="inline-flex items-center justify-center mb-4">
+          <div className="inline-flex items-center justify-center gap-4 mb-4">
             <ThemeToggle />
+            <Button variant="outline" onClick={handleSignOut}>
+              Sign Out
+            </Button>
           </div>
           <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary dark:from-primary dark:via-primary/80 dark:to-primary/60">
             Project Pulse
