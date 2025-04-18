@@ -1,10 +1,12 @@
 // Define the core types for the application
+// Define the status level type (this was missing)
+export type StatusLevel = 1 | 2 | 3 | 4 | 5;
 
 export interface User {
   id: string;
   username: string;
   level: UserLevel;
-  dailyStatus: { [date: string]: number }; // Store daily statuses by date
+  dailyStatus: { [date: string]: StatusLevel }; // Store daily statuses by date
   monthlyStatus: { [month: string]: number }; // Store monthly aggregated statuses
   note: string;
 }
