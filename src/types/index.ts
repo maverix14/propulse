@@ -1,4 +1,3 @@
-
 // Define the core types for the application
 
 export interface User {
@@ -19,9 +18,10 @@ export interface Project {
   id: string;
   name: string;
   description: string;
-  users: User[];
   createdAt: string;
-  icon?: string; // Optional icon name
+  icon?: string;
+  users: User[];
+  tags?: string[]; // Add tags property for platform tags
 }
 
 export type StatusLevel = 1 | 2 | 3 | 4 | 5;

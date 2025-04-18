@@ -1,9 +1,8 @@
 
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Users, Zap, Edit, Trash, UserPlus, X, Check, Shield, AlertTriangle } from "lucide-react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
+import { ChevronDown, ChevronUp, Users, Zap, Edit, Trash, X, Check, Shield, AlertTriangle, Pencil, Github, VercelLogo } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Project, StatusLevel, User as UserType, UserLevel, getProjectStats, hasReachedDailyLimit, hasReachedMonthlyLimit } from "@/types";
 import { StatusSelector } from "./StatusSelector";
 import { getCurrentDate, getCurrentMonth } from "@/utils/dateUtils";
@@ -46,10 +45,15 @@ import {
   AlertDialogTitle,
 } from "./ui/alert-dialog";
 import { syncUserAcrossProjects, initializeNewUser } from "@/utils/storageUtils";
-import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "./ui/popover";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { NewProjectDialog } from "./NewProjectDialog";
 
 const iconMap = {
   default: faRocket,
@@ -85,9 +89,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   const [expanded, setExpanded] = useState(false);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteText, setNoteText] = useState<string>("");
-  const [isEditing, setIsEditing] = useState(false);
-  const [editedProject, setEditedProject] = useState(project);
-  const [newUsername, setNewUsername] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userLevelDialogOpen, setUserLevelDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
@@ -97,60 +98,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   const currentMonth = getCurrentMonth();
   
   const { userCount, dailyStatusSum, averageStatus } = getProjectStats(project, currentDate);
-  
-  const handleProjectEdit = () => {
-    onUpdate(editedProject);
-    setIsEditing(false);
-    toast({
-      title: "Project updated",
-      description: "Project details have been updated successfully."
-    });
-  };
-
-  const handleAddUser = () => {
-    if (!newUsername.trim()) return;
-    
-    // Check if user already exists in this project
-    const existingUser = project.users.find(user => 
-      user.username.toLowerCase() === newUsername.trim().toLowerCase()
-    );
-    
-    if (existingUser) {
-      toast({
-        title: "User already exists",
-        description: "This user is already in the project.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Initialize a new user (will check global registry)
-    const newUser = initializeNewUser(newUsername.trim());
-    
-    const updatedProject = {
-      ...project,
-      users: [...project.users, newUser]
-    };
-    
-    onUpdate(updatedProject);
-    setNewUsername("");
-    
-    toast({
-      title: "User added",
-      description: `${newUser.username} has been added to the project.`
-    });
-  };
-
-  const handleRemoveUser = (userId: string) => {
-    const updatedUsers = project.users.filter(user => user.id !== userId);
-    const updatedProject = { ...project, users: updatedUsers };
-    onUpdate(updatedProject);
-    
-    toast({
-      title: "User removed",
-      description: "The user has been removed from the project."
-    });
-  };
 
   const handleChangeUserLevel = (user: UserType) => {
     setSelectedUser(user);
@@ -263,13 +210,8 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
     }
   };
 
-  const startEditingNote = (userId: string, note: string) => {
-    setEditingNote(userId);
-    setNoteText(note || "");
-  };
-
-  const saveNote = (userId: string) => {
-    handleNoteChange(userId, noteText);
+  const saveNote = (userId: string, note: string) => {
+    handleNoteChange(userId, note);
     setEditingNote(null);
   };
 
@@ -312,6 +254,25 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
     return user.level === UserLevel.Level1 ? 30 : 100;
   };
 
+  const renderPlatformTag = (tagId: string) => {
+    switch(tagId) {
+      case 'github':
+        return <Github className="h-3.5 w-3.5" />;
+      case 'vercel':
+        return <VercelLogo className="h-3.5 w-3.5" />;
+      case 'supabase':
+        return (
+          <svg className="h-3.5 w-3.5" viewBox="0 0 109 113" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="currentColor"/>
+            <path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="currentColor" fillOpacity="0.6"/>
+            <path d="M45.317 2.07103C48.1765 -1.53037 53.9745 0.442937 54.0434 5.041L54.4849 72.2922H9.83113C1.64038 72.2922 -2.92775 62.8321 2.1655 56.4175L45.317 2.07103Z" fill="currentColor"/>
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       <Card style={getCardStyle()} className="transition-all duration-300 hover:shadow-lg border-none backdrop-blur-sm dark:bg-black/20">
@@ -320,52 +281,42 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
           onClick={toggleExpanded}
         >
           <div className="flex justify-between items-center">
-            {isEditing ? (
-              <div className="flex-1 flex items-center gap-4">
-                <div className="relative h-6 w-6 flex items-center justify-center text-primary dark:text-primary">
-                  <FontAwesomeIcon icon={getProjectIcon()} className="h-5 w-5" />
-                </div>
-                <Input
-                  value={editedProject.name}
-                  onChange={(e) => setEditedProject({ ...editedProject, name: e.target.value })}
-                  className="max-w-[200px]"
-                />
-                <Textarea
-                  value={editedProject.description}
-                  onChange={(e) => setEditedProject({ ...editedProject, description: e.target.value })}
-                  className="flex-1 h-[40px] resize-none"
-                />
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleProjectEdit}>Save</Button>
-                  <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)}>Cancel</Button>
-                </div>
+            <div className="flex items-center space-x-3">
+              <div className="relative h-6 w-6 flex items-center justify-center text-primary dark:text-primary">
+                <FontAwesomeIcon icon={getProjectIcon()} className="h-5 w-5" />
+                <div className="absolute inset-0 blur-md rounded-full bg-primary/10 dark:bg-primary/20"></div>
               </div>
-            ) : (
-              <div className="flex items-center space-x-3">
-                <div className="relative h-6 w-6 flex items-center justify-center text-primary dark:text-primary">
-                  <FontAwesomeIcon icon={getProjectIcon()} className="h-5 w-5" />
-                  <div className="absolute inset-0 blur-md rounded-full bg-primary/10 dark:bg-primary/20"></div>
-                </div>
-                <div className="flex-1">
-                  <CardTitle className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent dark:from-primary dark:to-primary/60">
-                    {project.name}
-                  </CardTitle>
-                  <CardDescription className="mt-1">{project.description}</CardDescription>
-                </div>
+              <div className="flex-1">
+                <CardTitle className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent dark:from-primary dark:to-primary/60">
+                  {project.name}
+                </CardTitle>
+                <CardDescription className="mt-1">{project.description}</CardDescription>
               </div>
-            )}
+            </div>
             
             <div className="flex items-center gap-4">
-              <div className="flex items-center space-x-2">
-                <Badge variant="outline" className="flex items-center gap-1 bg-background/70 backdrop-blur-sm dark:bg-black/30">
-                  <Users className="h-3.5 w-3.5" />
-                  <span>{userCount}</span>
-                </Badge>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center space-x-2">
+                  <Badge variant="outline" className="flex items-center gap-1 bg-background/70 backdrop-blur-sm dark:bg-black/30">
+                    <Users className="h-3.5 w-3.5" />
+                    <span>{userCount}</span>
+                  </Badge>
+                  
+                  <Badge variant="outline" className="flex items-center gap-1 bg-background/70 backdrop-blur-sm dark:bg-black/30">
+                    <Zap className="h-3.5 w-3.5" />
+                    <span>{dailyStatusSum}</span>
+                  </Badge>
+                </div>
                 
-                <Badge variant="outline" className="flex items-center gap-1 bg-background/70 backdrop-blur-sm dark:bg-black/30">
-                  <Zap className="h-3.5 w-3.5" />
-                  <span>{dailyStatusSum}</span>
-                </Badge>
+                {project.tags && project.tags.length > 0 && (
+                  <div className="flex items-center gap-1 justify-end">
+                    {project.tags.map(tagId => (
+                      <Badge key={tagId} variant="outline" className="h-6 w-6 p-0 flex items-center justify-center bg-background/70 backdrop-blur-sm dark:bg-black/30">
+                        {renderPlatformTag(tagId)}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
               
               <Button variant="ghost" size="icon" className="rounded-full">
@@ -379,54 +330,39 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
           <CardContent className="space-y-6 pt-4">
             <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-muted/50 to-transparent mb-4 dark:via-muted/20"></div>
             
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Input
-                  placeholder="Add new user..."
-                  value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
-                  className="flex-1"
-                />
-                <Button 
-                  size="sm"
-                  variant="outline"
-                  onClick={handleAddUser}
-                >
-                  <UserPlus className="h-4 w-4" />
-                </Button>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsEditing(true);
-                  }}
-                >
-                  <Edit className="h-4 w-4" /> Edit
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="flex items-center gap-1 text-destructive hover:text-destructive"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash className="h-4 w-4" /> Delete
-                </Button>
-              </div>
+            <div className="flex items-center justify-end gap-2">
+              <NewProjectDialog 
+                project={project}
+                editMode={true}
+                onProjectEdit={onUpdate}
+                trigger={
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <Edit className="h-4 w-4" /> Edit
+                  </Button>
+                }
+              />
+              <Button
+                variant="ghost"
+                size="sm"
+                className="flex items-center gap-1 text-destructive hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteDialogOpen(true);
+                }}
+              >
+                <Trash className="h-4 w-4" /> Delete
+              </Button>
             </div>
             
             {project.users.length === 0 ? (
               <div className="text-center py-8 border border-dashed rounded-lg border-muted-foreground/20 bg-background/50 backdrop-blur-sm dark:bg-black/20">
                 <Users className="w-12 h-12 mx-auto text-muted-foreground/50 mb-2" />
                 <p className="text-muted-foreground">No users assigned to this project</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Add users to start tracking status</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">Edit the project to add users</p>
               </div>
             ) : (
               <div className="grid gap-4">
@@ -472,35 +408,37 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                                 </Tooltip>
                               </TooltipProvider>
                             </div>
-                            {editingNote === user.id ? (
-                              <div className="flex items-center mt-1">
-                                <Input 
-                                  value={noteText}
-                                  onChange={(e) => setNoteText(e.target.value)}
-                                  className="h-6 text-xs py-1 px-2 bg-background/80 dark:bg-black/40"
-                                  placeholder="Add status note..."
-                                />
-                                <Button 
-                                  size="icon" 
-                                  variant="ghost" 
-                                  className="h-6 w-6 ml-1" 
-                                  onClick={() => saveNote(user.id)}
-                                >
-                                  <Check className="h-3 w-3" />
-                                </Button>
-                              </div>
-                            ) : (
-                              <div 
-                                className="text-xs text-muted-foreground flex items-center gap-1 cursor-pointer hover:text-foreground transition-colors"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  startEditingNote(user.id, user.note || "");
-                                }}
-                              >
-                                <span>{user.note ? user.note : "Add status note..."}</span>
-                                <Edit className="h-3 w-3 opacity-60" />
-                              </div>
-                            )}
+                            <div className="flex items-center mt-1">
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 px-2 text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
+                                  >
+                                    <Pencil className="h-3 w-3" />
+                                    {user.note ? <span className="truncate max-w-[150px]">{user.note}</span> : "Edit status note"}
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80 p-4">
+                                  <div className="space-y-2">
+                                    <Label htmlFor={`note-${user.id}`}>Status Note</Label>
+                                    <textarea
+                                      id={`note-${user.id}`}
+                                      className="w-full min-h-[100px] p-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                                      placeholder="Enter status note..."
+                                      defaultValue={user.note || ""}
+                                      onBlur={(e) => saveNote(user.id, e.target.value)}
+                                    />
+                                    <div className="flex justify-end">
+                                      <Button size="sm" onClick={() => saveNote(user.id, document.getElementById(`note-${user.id}`) ? (document.getElementById(`note-${user.id}`) as HTMLTextAreaElement).value : "")}>
+                                        Save
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            </div>
                           </div>
                         </div>
                         
@@ -576,7 +514,13 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8 text-destructive hover:text-destructive"
-                            onClick={() => handleRemoveUser(user.id)}
+                            onClick={() => {
+                              const updatedProject = {
+                                ...project,
+                                users: project.users.filter(u => u.id !== user.id)
+                              };
+                              onUpdate(updatedProject);
+                            }}
                           >
                             <X className="h-4 w-4" />
                           </Button>

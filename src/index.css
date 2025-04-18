@@ -90,7 +90,7 @@
   }
 
   html, body {
-    @apply transition-colors duration-1000;
+    @apply transition-colors duration-[3000ms];
   }
 
   body {
