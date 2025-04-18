@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -88,7 +89,7 @@
     }
 
     html, body {
-      @apply transition-colors duration-[3000ms];
+      @apply transition-colors duration-3000;
     }
 
     body {
