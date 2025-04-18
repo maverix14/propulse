@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Project } from "@/types";
 import { loadProjects, saveProjects } from "@/utils/storageUtils";
@@ -6,23 +5,27 @@ import { ProjectCard } from "@/components/ProjectCard";
 import { NewProjectDialog } from "@/components/NewProjectDialog";
 import { Zap } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const { toast } = useToast();
 
-  // Load projects from localStorage on initial render
   useEffect(() => {
     const storedProjects = loadProjects();
     setProjects(storedProjects);
   }, []);
 
-  // Save projects to localStorage whenever they change
   useEffect(() => {
     saveProjects(projects);
   }, [projects]);
 
   const handleProjectCreate = (newProject: Project) => {
     setProjects([...projects, newProject]);
+    toast({
+      title: "Project created",
+      description: "Your new project has been created successfully.",
+    });
   };
 
   const handleProjectUpdate = (updatedProject: Project) => {
@@ -31,6 +34,19 @@ const Index = () => {
         project.id === updatedProject.id ? updatedProject : project
       )
     );
+    toast({
+      title: "Project updated",
+      description: "Your project has been updated successfully.",
+    });
+  };
+
+  const handleProjectDelete = (projectId: string) => {
+    setProjects(projects.filter((project) => project.id !== projectId));
+    toast({
+      title: "Project deleted",
+      description: "Your project has been deleted successfully.",
+      variant: "destructive",
+    });
   };
 
   return (
@@ -67,6 +83,7 @@ const Index = () => {
                 key={project.id}
                 project={project}
                 onUpdate={handleProjectUpdate}
+                onDelete={handleProjectDelete}
               />
             ))
           )}
