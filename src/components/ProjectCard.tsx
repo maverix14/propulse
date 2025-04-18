@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { ChevronDown, ChevronUp, User, Users, Zap, Edit, Trash, UserPlus, X, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
@@ -113,9 +112,7 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   const getProjectIcon = () => {
     if (!project.icon) return iconMap.default;
     
-    const iconName = `fa${project.icon.charAt(0).toUpperCase() + project.icon.slice(1)}`;
-    const selectedIcon = (freeSolidIcons as any)[iconName];
-    return selectedIcon || iconMap.default;
+    return iconMap[project.icon as keyof typeof iconMap] || iconMap.default;
   };
 
   const getCardStyle = () => {
