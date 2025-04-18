@@ -5,7 +5,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
-import { Project, User } from "@/types";
+import { Project, User, UserLevel } from "@/types";
 import { Plus, UserPlus, X } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -87,6 +87,7 @@ export const NewProjectDialog = ({ onProjectCreate }: NewProjectDialogProps) => 
     const newUser: User = {
       id: uuidv4(),
       username: newUsername.trim(),
+      level: UserLevel.Level1, // Add the required level property, default to Level1
       dailyStatus: {},
       monthlyStatus: {},
       note: ""
@@ -204,3 +205,4 @@ export const NewProjectDialog = ({ onProjectCreate }: NewProjectDialogProps) => 
     </Dialog>
   );
 };
+
