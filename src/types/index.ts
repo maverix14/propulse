@@ -24,8 +24,6 @@ export interface Project {
   tags?: string[]; // Add tags property for platform tags
 }
 
-export type StatusLevel = 1 | 2 | 3 | 4 | 5;
-
 // Helper functions to compute project statistics
 export const getProjectStats = (project: Project, currentDate: string) => {
   const userCount = project.users.length;

@@ -413,7 +413,7 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                                     className="h-6 px-2 text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
                                   >
                                     <Pencil className="h-3 w-3" />
-                                    {user.note ? <span className="truncate max-w-[150px]">{user.note}</span> : "Edit status note"}
+                                    {user.note ? <span className="truncate max-w-[150px]">{user.note}</span> : ""}
                                   </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-80 p-4">
