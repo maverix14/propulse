@@ -371,7 +371,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                   const dailyStatus = getUserStatus(user, currentDate);
                   const monthlyStatus = getUserMonthlyStatus(user, currentMonth);
                   const progressLimit = getProgressLimit(user);
-                  const hasHitDailyLimit = hasReachedDailyLimit(user, currentDate);
                   const hasHitMonthlyLimit = hasReachedMonthlyLimit(user, currentMonth);
                   
                   return (
@@ -446,27 +445,18 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                         <div className="flex items-center gap-6">
                           <div className="space-y-1">
                             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                              <div className="flex items-center">
-                                <span>Daily</span>
-                                {hasHitDailyLimit && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <AlertTriangle className="h-3 w-3 ml-1 text-amber-500" />
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Daily limit reached (5 points)</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                              </div>
-                              <span className="font-mono">{dailyStatus}/5</span>
+                              <span>Daily</span>
+                              <span className="font-mono">
+                                {dailyStatus}/{user.level === UserLevel.Level1 ? "5" : "∞"}
+                              </span>
                             </div>
                             <StatusSelector 
                               value={dailyStatus}
                               onChange={(value) => handleStatusChange(user.id, value)}
-                              disabled={hasHitDailyLimit || hasHitMonthlyLimit}
+                              disabled={
+                                (user.level === UserLevel.Level1 && hasReachedDailyLimit(user, currentDate)) 
+                                || hasHitMonthlyLimit
+                              }
                             />
                           </div>
                           

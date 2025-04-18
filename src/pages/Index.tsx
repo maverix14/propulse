@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Project } from "@/types";
 import { loadProjects, saveProjects } from "@/utils/storageUtils";
@@ -24,15 +23,12 @@ const Index = () => {
   const { user, signOut, isGuest } = useAuth();
   const navigate = useNavigate();
 
-  // Load projects from the appropriate source based on auth status
   useEffect(() => {
     const loadUserProjects = async () => {
       if (isGuest) {
-        // Load from local storage for guest users
         const storedProjects = loadProjects();
         setProjects(storedProjects);
       } else if (user) {
-        // Load from Supabase for authenticated users
         try {
           const { data, error } = await supabase
             .from('projects')
@@ -42,21 +38,18 @@ const Index = () => {
           if (error) throw error;
           
           if (data && data.length > 0) {
-            // Transform the data from Supabase format to our Project type
             const transformedProjects: Project[] = data.map(item => ({
               id: item.id,
               name: item.name,
               description: item.description || '',
               createdAt: item.created_at,
-              users: [], // Initialize with empty array, we'll populate later if needed
-              // The note field doesn't exist in the Supabase response, providing a default empty string
-              note: '', 
-              tags: [] // Initialize with empty array
+              users: [],
+              note: '',
+              tags: []
             }));
             
             setProjects(transformedProjects);
           } else {
-            // If no projects in DB, try loading from local storage
             const storedProjects = loadProjects();
             setProjects(storedProjects);
           }
@@ -68,7 +61,6 @@ const Index = () => {
             variant: "destructive"
           });
           
-          // Fallback to local storage
           const storedProjects = loadProjects();
           setProjects(storedProjects);
         }
@@ -78,21 +70,16 @@ const Index = () => {
     loadUserProjects();
   }, [user, isGuest, toast]);
 
-  // Save projects to the appropriate location
   useEffect(() => {
     const saveUserProjects = async () => {
       if (projects.length === 0) return;
       
       if (isGuest) {
-        // Save to local storage for guest users
         saveProjects(projects);
       } else if (user) {
-        // Save to Supabase for authenticated users
         try {
-          // First, save to local storage as backup
           saveProjects(projects);
           
-          // Then try to save to Supabase
           for (const project of projects) {
             const { error } = await supabase
               .from('projects')
@@ -179,18 +166,15 @@ const Index = () => {
         <header className="mb-10 text-center">
           <div className="inline-flex items-center justify-center gap-4 mb-4">
             <ThemeToggle />
-            <Button variant="outline" onClick={handleSignOut}>
-              {isGuest ? "Back to Login" : "Sign Out"}
-            </Button>
           </div>
           <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary dark:from-primary dark:via-primary/80 dark:to-primary/60">
             <span className="inline-flex items-center">
               <Zap className="w-10 h-10 mr-2 animate-pulse-slow text-primary" />
-              Project Pulse
+              ProPulse
             </span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mx-auto">
-            Track your projects' daily and monthly status with a futuristic approach
+            Track every pulse of your projects
           </p>
           {isGuest && (
             <div className="mt-2 text-sm text-amber-500 dark:text-amber-400 font-medium">
@@ -253,8 +237,8 @@ const Index = () => {
                     className="rounded-full"
                     onClick={() => {
                       toast({
-                        title: "Project Pulse",
-                        description: "Version 1.0.0 - Track your projects' status with ease"
+                        title: "ProPulse",
+                        description: "Version 1.0.0 - Track every pulse of your projects"
                       });
                     }}
                   >
@@ -266,7 +250,7 @@ const Index = () => {
             </TooltipProvider>
           </div>
           <p className="text-center text-xs text-muted-foreground mt-4">
-            Project Pulse v1.0.0
+            ProPulse v1.0.0
           </p>
         </div>
       </footer>
