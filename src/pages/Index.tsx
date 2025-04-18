@@ -42,7 +42,18 @@ const Index = () => {
           if (error) throw error;
           
           if (data && data.length > 0) {
-            setProjects(data as Project[]);
+            // Transform the data from Supabase format to our Project type
+            const transformedProjects: Project[] = data.map(item => ({
+              id: item.id,
+              name: item.name,
+              description: item.description || '',
+              createdAt: item.created_at,
+              users: [], // Initialize with empty array, we'll populate later if needed
+              note: item.note || '',
+              tags: [] // Initialize with empty array
+            }));
+            
+            setProjects(transformedProjects);
           } else {
             // If no projects in DB, try loading from local storage
             const storedProjects = loadProjects();
