@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { ChevronDown, ChevronUp, User, Users, Zap, Edit, Trash, UserPlus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, User, Users, Zap, Edit, Trash, UserPlus, X, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -11,7 +12,21 @@ import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import { Avatar, AvatarFallback } from "./ui/avatar";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import * as freeSolidIcons from "@fortawesome/free-solid-svg-icons";
+import { 
+  faRocket, 
+  faAtom,
+  faBrain,
+  faCode,
+  faDatabase,
+  faFire,
+  faGlobe,
+  faLaptopCode,
+  faMicrochip,
+  faMountain,
+  faPuzzlePiece,
+  faRobot,
+  faSatellite
+} from "@fortawesome/free-solid-svg-icons";
 import {
   AlertDialog,
   AlertDialogAction,
