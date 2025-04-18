@@ -8,17 +8,18 @@ import { StatusLevel } from "@/types";
 interface StatusSelectorProps {
   value: StatusLevel;
   onChange: (value: StatusLevel) => void;
+  disabled?: boolean;
 }
 
-export const StatusSelector = ({ value, onChange }: StatusSelectorProps) => {
+export const StatusSelector = ({ value, onChange, disabled = false }: StatusSelectorProps) => {
   const handleIncrement = () => {
-    if (value < 5) {
+    if (value < 5 && !disabled) {
       onChange((value + 1) as StatusLevel);
     }
   };
 
   const handleDecrement = () => {
-    if (value > 1) {
+    if (value > 1 && !disabled) {
       onChange((value - 1) as StatusLevel);
     }
   };
@@ -32,7 +33,7 @@ export const StatusSelector = ({ value, onChange }: StatusSelectorProps) => {
           size="icon" 
           className="h-6 w-6" 
           onClick={handleIncrement}
-          disabled={value >= 5}
+          disabled={value >= 5 || disabled}
         >
           <ChevronUp className="h-4 w-4" />
         </Button>
@@ -41,7 +42,7 @@ export const StatusSelector = ({ value, onChange }: StatusSelectorProps) => {
           size="icon" 
           className="h-6 w-6" 
           onClick={handleDecrement}
-          disabled={value <= 1}
+          disabled={value <= 1 || disabled}
         >
           <ChevronDown className="h-4 w-4" />
         </Button>

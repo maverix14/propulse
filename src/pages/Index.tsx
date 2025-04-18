@@ -1,6 +1,7 @@
+
 import { useEffect, useState } from "react";
 import { Project } from "@/types";
-import { loadProjects, saveProjects } from "@/utils/storageUtils";
+import { loadProjects, saveProjects, syncUserAcrossProjects } from "@/utils/storageUtils";
 import { ProjectCard } from "@/components/ProjectCard";
 import { NewProjectDialog } from "@/components/NewProjectDialog";
 import { Zap } from "lucide-react";
@@ -34,10 +35,8 @@ const Index = () => {
         project.id === updatedProject.id ? updatedProject : project
       )
     );
-    toast({
-      title: "Project updated",
-      description: "Your project has been updated successfully.",
-    });
+    
+    // No need to show a toast here as most updates already show toasts
   };
 
   const handleProjectDelete = (projectId: string) => {

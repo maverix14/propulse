@@ -1,9 +1,10 @@
+
 import { useState } from "react";
-import { ChevronDown, ChevronUp, User, Users, Zap, Edit, Trash, UserPlus, X, Check } from "lucide-react";
+import { ChevronDown, ChevronUp, Users, Zap, Edit, Trash, UserPlus, X, Check, Shield, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Project, StatusLevel, User as UserType, getProjectStats } from "@/types";
+import { Project, StatusLevel, User as UserType, UserLevel, getProjectStats, hasReachedDailyLimit, hasReachedMonthlyLimit } from "@/types";
 import { StatusSelector } from "./StatusSelector";
 import { getCurrentDate, getCurrentMonth } from "@/utils/dateUtils";
 import { Progress } from "./ui/progress";
@@ -24,7 +25,15 @@ import {
   faMountain,
   faPuzzlePiece,
   faRobot,
-  faSatellite
+  faSatellite,
+  faBook,
+  faCloud,
+  faLeaf,
+  faStar,
+  faLightbulb,
+  faShield,
+  faVial,
+  faWifi
 } from "@fortawesome/free-solid-svg-icons";
 import {
   AlertDialog,
@@ -36,9 +45,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "./ui/alert-dialog";
-import { v4 as uuidv4 } from "uuid";
+import { syncUserAcrossProjects, initializeNewUser } from "@/utils/storageUtils";
 import { Textarea } from "./ui/textarea";
 import { Label } from "./ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { useToast } from "@/hooks/use-toast";
 
 const iconMap = {
   default: faRocket,
@@ -53,7 +64,15 @@ const iconMap = {
   mountain: faMountain,
   puzzle: faPuzzlePiece,
   robot: faRobot,
-  satellite: faSatellite
+  satellite: faSatellite,
+  book: faBook,
+  cloud: faCloud,
+  leaf: faLeaf,
+  star: faStar,
+  bulb: faLightbulb,
+  shield: faShield,
+  vial: faVial,
+  wifi: faWifi
 };
 
 interface ProjectCardProps {
@@ -70,6 +89,9 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   const [editedProject, setEditedProject] = useState(project);
   const [newUsername, setNewUsername] = useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userLevelDialogOpen, setUserLevelDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
+  const { toast } = useToast();
   
   const currentDate = getCurrentDate();
   const currentMonth = getCurrentMonth();
@@ -79,34 +101,86 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   const handleProjectEdit = () => {
     onUpdate(editedProject);
     setIsEditing(false);
+    toast({
+      title: "Project updated",
+      description: "Project details have been updated successfully."
+    });
   };
 
   const handleAddUser = () => {
     if (!newUsername.trim()) return;
     
-    const newUser: UserType = {
-      id: uuidv4(),
-      username: newUsername.trim(),
-      dailyStatus: {},
-      monthlyStatus: {},
-      note: ""
+    // Check if user already exists in this project
+    const existingUser = project.users.find(user => 
+      user.username.toLowerCase() === newUsername.trim().toLowerCase()
+    );
+    
+    if (existingUser) {
+      toast({
+        title: "User already exists",
+        description: "This user is already in the project.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Initialize a new user (will check global registry)
+    const newUser = initializeNewUser(newUsername.trim());
+    
+    const updatedProject = {
+      ...project,
+      users: [...project.users, newUser]
     };
     
-    setEditedProject({
-      ...editedProject,
-      users: [...editedProject.users, newUser]
-    });
-    onUpdate({
-      ...editedProject,
-      users: [...editedProject.users, newUser]
-    });
+    onUpdate(updatedProject);
     setNewUsername("");
+    
+    toast({
+      title: "User added",
+      description: `${newUser.username} has been added to the project.`
+    });
   };
 
   const handleRemoveUser = (userId: string) => {
     const updatedUsers = project.users.filter(user => user.id !== userId);
     const updatedProject = { ...project, users: updatedUsers };
     onUpdate(updatedProject);
+    
+    toast({
+      title: "User removed",
+      description: "The user has been removed from the project."
+    });
+  };
+
+  const handleChangeUserLevel = (user: UserType) => {
+    setSelectedUser(user);
+    setUserLevelDialogOpen(true);
+  };
+
+  const updateUserLevel = (level: UserLevel) => {
+    if (!selectedUser) return;
+    
+    const updatedUser = { 
+      ...selectedUser, 
+      level 
+    };
+    
+    // Sync across all projects
+    const updatedProjects = syncUserAcrossProjects(updatedUser);
+    
+    // Find the updated version of current project
+    const thisProject = updatedProjects.find(p => p.id === project.id);
+    if (thisProject) {
+      onUpdate(thisProject);
+    }
+    
+    setUserLevelDialogOpen(false);
+    setSelectedUser(null);
+    
+    toast({
+      title: "User level updated",
+      description: `${updatedUser.username}'s level has been changed to Level ${level}.`
+    });
   };
 
   const getProjectIcon = () => {
@@ -139,32 +213,54 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   };
 
   const handleStatusChange = (userId: string, value: StatusLevel) => {
-    const updatedUsers = project.users.map(user => {
-      if (user.id === userId) {
-        const dailyStatus = { ...(user.dailyStatus || {}) };
-        dailyStatus[currentDate] = value;
+    const userToUpdate = project.users.find(user => user.id === userId);
+    if (!userToUpdate) return;
+    
+    // Check if user has reached daily limit (Level 1 users only)
+    if (userToUpdate.level === UserLevel.Level1 && 
+        hasReachedDailyLimit(userToUpdate, currentDate) && 
+        value > (userToUpdate.dailyStatus?.[currentDate] || 0)) {
+      toast({
+        title: "Daily limit reached",
+        description: "Level 1 users can only add up to 5 points per day.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Check if user has reached monthly limit
+    if (hasReachedMonthlyLimit(userToUpdate, currentMonth) && 
+        value > (userToUpdate.dailyStatus?.[currentDate] || 0)) {
+      toast({
+        title: "Monthly limit reached",
+        description: `Level ${userToUpdate.level} users can only add up to ${userToUpdate.level === UserLevel.Level1 ? 30 : 100} points per month.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    const updatedUser = { ...userToUpdate };
+    const dailyStatus = { ...(updatedUser.dailyStatus || {}) };
+    dailyStatus[currentDate] = value;
+    updatedUser.dailyStatus = dailyStatus;
 
-        const monthlyStatus = { ...(user.monthlyStatus || {}) };
-        
-        const monthlySum = Object.entries(dailyStatus)
-          .filter(([date]) => date.startsWith(currentMonth))
-          .reduce((sum, [, status]) => sum + status, 0);
-        
-        monthlyStatus[currentMonth] = monthlySum;
+    const monthlyStatus = { ...(updatedUser.monthlyStatus || {}) };
+    
+    const monthlySum = Object.entries(dailyStatus)
+      .filter(([date]) => date.startsWith(currentMonth))
+      .reduce((sum, [, status]) => sum + status, 0);
+    
+    monthlyStatus[currentMonth] = monthlySum;
+    updatedUser.monthlyStatus = monthlyStatus;
 
-        return {
-          ...user,
-          dailyStatus,
-          monthlyStatus
-        };
-      }
-      return user;
-    });
-
-    onUpdate({
-      ...project,
-      users: updatedUsers
-    });
+    // Sync this user across all projects
+    const updatedProjects = syncUserAcrossProjects(updatedUser);
+    
+    // Find the updated version of the current project
+    const thisProject = updatedProjects.find(p => p.id === project.id);
+    if (thisProject) {
+      onUpdate(thisProject);
+    }
   };
 
   const startEditingNote = (userId: string, note: string) => {
@@ -178,20 +274,19 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
   };
 
   const handleNoteChange = (userId: string, note: string) => {
-    const updatedUsers = project.users.map(user => {
-      if (user.id === userId) {
-        return {
-          ...user,
-          note
-        };
-      }
-      return user;
-    });
+    const userToUpdate = project.users.find(user => user.id === userId);
+    if (!userToUpdate) return;
 
-    onUpdate({
-      ...project,
-      users: updatedUsers
-    });
+    const updatedUser = { ...userToUpdate, note };
+    
+    // Sync across all projects
+    const updatedProjects = syncUserAcrossProjects(updatedUser);
+    
+    // Find the updated version of current project
+    const thisProject = updatedProjects.find(p => p.id === project.id);
+    if (thisProject) {
+      onUpdate(thisProject);
+    }
   };
 
   const getUserStatus = (user: UserType, date: string): StatusLevel => {
@@ -201,6 +296,20 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
 
   const getUserMonthlyStatus = (user: UserType, month: string): number => {
     return (user.monthlyStatus && user.monthlyStatus[month]) || 0;
+  };
+
+  const getUserLevelBadge = (level: UserLevel) => {
+    return (
+      <Badge variant={level === UserLevel.Level1 ? "outline" : "secondary"} 
+        className="ml-2 text-xs flex items-center gap-1">
+        <Shield className="h-3 w-3" />
+        Level {level}
+      </Badge>
+    );
+  };
+
+  const getProgressLimit = (user: UserType) => {
+    return user.level === UserLevel.Level1 ? 30 : 100;
   };
 
   return (
@@ -259,33 +368,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                 </Badge>
               </div>
               
-              {!isEditing && (
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setIsEditing(true);
-                    }}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full text-destructive hover:text-destructive"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteDialogOpen(true);
-                    }}
-                  >
-                    <Trash className="h-4 w-4" />
-                  </Button>
-                </div>
-              )}
-              
               <Button variant="ghost" size="icon" className="rounded-full">
                 {expanded ? <ChevronUp className="text-primary" /> : <ChevronDown className="text-primary" />}
               </Button>
@@ -297,20 +379,47 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
           <CardContent className="space-y-6 pt-4">
             <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-muted/50 to-transparent mb-4 dark:via-muted/20"></div>
             
-            <div className="flex items-center gap-2">
-              <Input
-                placeholder="Add new user..."
-                value={newUsername}
-                onChange={(e) => setNewUsername(e.target.value)}
-                className="flex-1"
-              />
-              <Button 
-                size="sm"
-                variant="outline"
-                onClick={handleAddUser}
-              >
-                <UserPlus className="h-4 w-4" />
-              </Button>
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="Add new user..."
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  className="flex-1"
+                />
+                <Button 
+                  size="sm"
+                  variant="outline"
+                  onClick={handleAddUser}
+                >
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditing(true);
+                  }}
+                >
+                  <Edit className="h-4 w-4" /> Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="flex items-center gap-1 text-destructive hover:text-destructive"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash className="h-4 w-4" /> Delete
+                </Button>
+              </div>
             </div>
             
             {project.users.length === 0 ? (
@@ -324,6 +433,9 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                 {project.users.map((user) => {
                   const dailyStatus = getUserStatus(user, currentDate);
                   const monthlyStatus = getUserMonthlyStatus(user, currentMonth);
+                  const progressLimit = getProgressLimit(user);
+                  const hasHitDailyLimit = hasReachedDailyLimit(user, currentDate);
+                  const hasHitMonthlyLimit = hasReachedMonthlyLimit(user, currentMonth);
                   
                   return (
                     <div 
@@ -338,7 +450,28 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <h3 className="font-medium">{user.username}</h3>
+                            <div className="flex items-center">
+                              <h3 className="font-medium">{user.username}</h3>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="p-0 h-auto" 
+                                      onClick={() => handleChangeUserLevel(user)}
+                                    >
+                                      {getUserLevelBadge(user.level)}
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Level 1: 30 points/month, 5 points/day max</p>
+                                    <p>Level 2: 100 points/month, no daily limit</p>
+                                    <p className="text-xs mt-1">Click to change level</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            </div>
                             {editingNote === user.id ? (
                               <div className="flex items-center mt-1">
                                 <Input 
@@ -374,38 +507,79 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                         <div className="flex items-center gap-6">
                           <div className="space-y-1">
                             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-                              <span>Daily</span>
+                              <div className="flex items-center">
+                                <span>Daily</span>
+                                {hasHitDailyLimit && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <AlertTriangle className="h-3 w-3 ml-1 text-amber-500" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Daily limit reached (5 points)</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </div>
                               <span className="font-mono">{dailyStatus}/5</span>
                             </div>
                             <StatusSelector 
                               value={dailyStatus}
                               onChange={(value) => handleStatusChange(user.id, value)}
+                              disabled={hasHitDailyLimit || hasHitMonthlyLimit}
                             />
                           </div>
                           
                           <div className="space-y-1 min-w-[80px]">
                             <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-                              <span>Points</span>
-                              <span className="font-mono font-semibold">{monthlyStatus}</span>
+                              <div className="flex items-center">
+                                <span>Points</span>
+                                {hasHitMonthlyLimit && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <AlertTriangle className="h-3 w-3 ml-1 text-amber-500" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Monthly limit reached ({progressLimit} points)</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                              </div>
+                              <span className="font-mono font-semibold">{monthlyStatus}/{progressLimit}</span>
                             </div>
                             <div className="relative">
                               <Progress 
-                                value={Math.min(100, (monthlyStatus / 150) * 100)} 
+                                value={Math.min(100, (monthlyStatus / progressLimit) * 100)} 
                                 className="h-1"
                               />
                               <div className="grid grid-cols-5 gap-0.5 absolute inset-0 -top-1">
-                                {[0, 30, 60, 90, 120].map((threshold, i) => (
-                                  <div 
-                                    key={i} 
-                                    className={cn(
-                                      "h-3 w-0.5 mx-auto rounded-full opacity-50",
-                                      monthlyStatus >= threshold ? `bg-status-${i+1}` : "bg-muted/20"
-                                    )}
-                                  />
-                                ))}
+                                {Array.from({length: 5}).map((_, i) => {
+                                  const threshold = Math.round(progressLimit * (i / 4));
+                                  return (
+                                    <div 
+                                      key={i} 
+                                      className={cn(
+                                        "h-3 w-0.5 mx-auto rounded-full opacity-50",
+                                        monthlyStatus >= threshold ? `bg-status-${i+1}` : "bg-muted/20"
+                                      )}
+                                    />
+                                  );
+                                })}
                               </div>
                             </div>
                           </div>
+                          
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:text-destructive"
+                            onClick={() => handleRemoveUser(user.id)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -434,6 +608,52 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
             >
               Delete
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog open={userLevelDialogOpen} onOpenChange={setUserLevelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Change User Level</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedUser && (
+                <>
+                  <p className="mb-2">Select a level for {selectedUser.username}:</p>
+                  <div className="grid gap-4 mt-4">
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant={selectedUser.level === UserLevel.Level1 ? "default" : "outline"}
+                        className="w-full justify-start"
+                        onClick={() => updateUserLevel(UserLevel.Level1)}
+                      >
+                        <Shield className="mr-2 h-4 w-4" />
+                        Level 1
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          30 points/month, 5 points/day
+                        </span>
+                      </Button>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant={selectedUser.level === UserLevel.Level2 ? "default" : "outline"}
+                        className="w-full justify-start"
+                        onClick={() => updateUserLevel(UserLevel.Level2)}
+                      >
+                        <Shield className="mr-2 h-4 w-4" />
+                        Level 2
+                        <span className="ml-auto text-xs text-muted-foreground">
+                          100 points/month, no daily limit
+                        </span>
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
