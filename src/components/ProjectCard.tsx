@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { ChevronDown, ChevronUp, Users, Zap, Edit, Trash, X, Check, Shield, AlertTriangle, Pencil, Github, VercelLogo } from "lucide-react";
+import { ChevronDown, ChevronUp, Users, Zap, Edit, Trash, X, Check, Shield, AlertTriangle, Pencil, Github } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
 import { Project, StatusLevel, User as UserType, UserLevel, getProjectStats, hasReachedDailyLimit, hasReachedMonthlyLimit } from "@/types";
@@ -112,10 +111,8 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
       level 
     };
     
-    // Sync across all projects
     const updatedProjects = syncUserAcrossProjects(updatedUser);
     
-    // Find the updated version of current project
     const thisProject = updatedProjects.find(p => p.id === project.id);
     if (thisProject) {
       onUpdate(thisProject);
@@ -163,7 +160,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
     const userToUpdate = project.users.find(user => user.id === userId);
     if (!userToUpdate) return;
     
-    // Check if user has reached daily limit (Level 1 users only)
     if (userToUpdate.level === UserLevel.Level1 && 
         hasReachedDailyLimit(userToUpdate, currentDate) && 
         value > (userToUpdate.dailyStatus?.[currentDate] || 0)) {
@@ -175,7 +171,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
       return;
     }
     
-    // Check if user has reached monthly limit
     if (hasReachedMonthlyLimit(userToUpdate, currentMonth) && 
         value > (userToUpdate.dailyStatus?.[currentDate] || 0)) {
       toast({
@@ -200,10 +195,8 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
     monthlyStatus[currentMonth] = monthlySum;
     updatedUser.monthlyStatus = monthlyStatus;
 
-    // Sync this user across all projects
     const updatedProjects = syncUserAcrossProjects(updatedUser);
     
-    // Find the updated version of the current project
     const thisProject = updatedProjects.find(p => p.id === project.id);
     if (thisProject) {
       onUpdate(thisProject);
@@ -221,10 +214,8 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
 
     const updatedUser = { ...userToUpdate, note };
     
-    // Sync across all projects
     const updatedProjects = syncUserAcrossProjects(updatedUser);
     
-    // Find the updated version of current project
     const thisProject = updatedProjects.find(p => p.id === project.id);
     if (thisProject) {
       onUpdate(thisProject);
@@ -259,7 +250,11 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
       case 'github':
         return <Github className="h-3.5 w-3.5" />;
       case 'vercel':
-        return <VercelLogo className="h-3.5 w-3.5" />;
+        return (
+          <svg className="h-3.5 w-3.5" viewBox="0 0 116 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path fillRule="evenodd" clipRule="evenodd" d="M57.5 0L115 100H0L57.5 0Z" />
+          </svg>
+        );
       case 'supabase':
         return (
           <svg className="h-3.5 w-3.5" viewBox="0 0 109 113" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -335,6 +330,7 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                 project={project}
                 editMode={true}
                 onProjectEdit={onUpdate}
+                onProjectCreate={() => {}} // Add missing prop with empty function
                 trigger={
                   <Button
                     variant="ghost"
