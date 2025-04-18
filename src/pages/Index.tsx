@@ -49,7 +49,8 @@ const Index = () => {
               description: item.description || '',
               createdAt: item.created_at,
               users: [], // Initialize with empty array, we'll populate later if needed
-              note: item.note || '',
+              // The note field doesn't exist in the Supabase response, providing a default empty string
+              note: '', 
               tags: [] // Initialize with empty array
             }));
             
