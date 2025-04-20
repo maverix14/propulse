@@ -18,17 +18,19 @@ export const ProjectNotes = ({ project, onUpdate, isExpanded }: ProjectNotesProp
   const { toast } = useToast();
 
   const handleSaveNote = () => {
-    const updatedProject = {
-      ...project,
-      note: noteText
-    };
-    onUpdate(updatedProject);
+    // Only update if there's been a change
+    if (noteText !== project.note) {
+      const updatedProject = {
+        ...project,
+        note: noteText
+      };
+      onUpdate(updatedProject);
+      toast({
+        title: "Note updated",
+        description: "Project note has been saved",
+      });
+    }
     setIsEditing(false);
-    toast({
-      title: "Note updated",
-      description: "Project note has been saved",
-      duration: 3000,
-    });
   };
 
   if (!isExpanded) return null;
@@ -41,12 +43,12 @@ export const ProjectNotes = ({ project, onUpdate, isExpanded }: ProjectNotesProp
         </h4>
       </div>
       {isEditing ? (
-        <div className="mt-2 space-y-2">
+        <div className="mt-2">
           <Textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Add notes about this project..."
-            className="min-h-[100px] bg-background text-foreground"
+            className="min-h-[100px] bg-background text-foreground dark:text-white"
             onBlur={handleSaveNote}
             autoFocus
           />

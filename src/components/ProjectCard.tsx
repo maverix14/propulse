@@ -54,6 +54,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/t
 import { useToast } from "@/hooks/use-toast";
 import { NewProjectDialog } from "./NewProjectDialog";
 import { ProjectNotes } from "./ProjectNotes";
+import { Textarea } from "./ui/textarea";
 
 const iconMap = {
   default: faRocket,
@@ -161,12 +162,11 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
     const userToUpdate = project.users.find(user => user.id === userId);
     if (!userToUpdate) return;
     
-    if (value > 5 && value > (userToUpdate.dailyStatus?.[currentDate] || 0)) {
+    if (value > 5 && userToUpdate.level === UserLevel.Level1 && value > (userToUpdate.dailyStatus?.[currentDate] || 0)) {
       toast({
         title: "Daily limit reached",
-        description: "Maximum 5 points per day allowed",
+        description: "Maximum 5 points per day allowed for Level 1 users",
         variant: "destructive",
-        duration: 3000,
       });
       return;
     }
@@ -177,7 +177,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
         title: "Monthly limit reached",
         description: `Level ${userToUpdate.level} users can only add up to ${userToUpdate.level === UserLevel.Level1 ? 30 : 100} points per month.`,
         variant: "destructive",
-        duration: 3000,
       });
       return;
     }
@@ -204,11 +203,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
     }
   };
 
-  const saveNote = (userId: string, note: string) => {
-    handleNoteChange(userId, note);
-    setEditingNote(null);
-  };
-
   const handleNoteChange = (userId: string, note: string) => {
     const userToUpdate = project.users.find(user => user.id === userId);
     if (!userToUpdate) return;
@@ -220,6 +214,10 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
     const thisProject = updatedProjects.find(p => p.id === project.id);
     if (thisProject) {
       onUpdate(thisProject);
+      toast({
+        title: "Note updated",
+        description: "User status note has been saved",
+      });
     }
   };
 
@@ -408,37 +406,6 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                                 </Tooltip>
                               </TooltipProvider>
                             </div>
-                            <div className="flex items-center mt-1">
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-6 px-2 text-xs flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                                  >
-                                    <Pencil className="h-3 w-3" />
-                                    {user.note ? <span className="truncate max-w-[150px]">{user.note}</span> : ""}
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80 p-4">
-                                  <div className="space-y-2">
-                                    <Label htmlFor={`note-${user.id}`}>Status Note</Label>
-                                    <textarea
-                                      id={`note-${user.id}`}
-                                      className="w-full min-h-[100px] p-2 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-ring"
-                                      placeholder="Enter status note..."
-                                      defaultValue={user.note || ""}
-                                      onBlur={(e) => saveNote(user.id, e.target.value)}
-                                    />
-                                    <div className="flex justify-end">
-                                      <Button size="sm" onClick={() => saveNote(user.id, document.getElementById(`note-${user.id}`) ? (document.getElementById(`note-${user.id}`) as HTMLTextAreaElement).value : "")}>
-                                        Save
-                                      </Button>
-                                    </div>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            </div>
                           </div>
                         </div>
                         
@@ -500,6 +467,31 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
                               </div>
                             </div>
                           </div>
+                        </div>
+                      </div>
+
+                      <div className="mt-3">
+                        <div 
+                          className="rounded-md border p-3 bg-muted/10 text-sm cursor-pointer hover:bg-muted/20 transition-colors"
+                          onClick={() => setEditingNote(user.id)}
+                        >
+                          {editingNote === user.id ? (
+                            <Textarea
+                              value={user.note || ""}
+                              onChange={(e) => setNoteText(e.target.value)}
+                              placeholder="Add notes about this user's status..."
+                              className="min-h-[80px] bg-background text-foreground dark:text-white"
+                              autoFocus
+                              onBlur={() => {
+                                if (user.note !== noteText) {
+                                  handleNoteChange(user.id, noteText);
+                                }
+                                setEditingNote(null);
+                              }}
+                            />
+                          ) : (
+                            user.note ? user.note : <span className="text-muted-foreground italic">Click to add status notes</span>
+                          )}
                         </div>
                       </div>
                     </div>
