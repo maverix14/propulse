@@ -15,13 +15,15 @@ export function Toaster() {
 
   // Auto-dismiss toasts after 3 seconds
   useEffect(() => {
-    const timer = setTimeout(() => {
-      toasts.forEach(toast => {
-        if (toast.open) dismiss(toast.id)
-      })
-    }, 3000)
-
-    return () => clearTimeout(timer)
+    toasts.forEach(toast => {
+      if (toast.open) {
+        const timer = setTimeout(() => {
+          dismiss(toast.id)
+        }, 3000)
+        
+        return () => clearTimeout(timer)
+      }
+    })
   }, [toasts, dismiss])
 
   return (
