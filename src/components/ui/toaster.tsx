@@ -26,6 +26,17 @@ export function Toaster() {
     })
   }, [toasts, dismiss])
 
+  // Add a "cache cleared" notification when the app updates
+  useEffect(() => {
+    // Register a listener for service worker updates
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        // Notify user that the app has been updated
+        console.log('Service worker controller has changed - app updated');
+      });
+    }
+  }, []);
+
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, ...props }) {

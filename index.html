@@ -7,7 +7,7 @@
     <title>Project Pulse</title>
     <meta name="description" content="A simple project status tracking tool for project owners" />
     <meta name="author" content="Lovable" />
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="/manifest.json?v=1.1.0" />
     <meta name="theme-color" content="#0f172a" />
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
 
@@ -27,12 +27,62 @@
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
+      // Check if the browser supports service workers
       if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js')
-            .then((reg) => console.log('Service worker registered:', reg))
-            .catch((err) => console.log('Service worker registration failed:', err));
+        // Register the service worker
+        window.addEventListener('load', async () => {
+          try {
+            // Try to register the service worker
+            const registration = await navigator.serviceWorker.register('/sw.js?v=1.1.0');
+            console.log('Service worker registered:', registration);
+            
+            // Check for updates every 60 minutes
+            setInterval(() => {
+              registration.update()
+                .then(() => console.log('Service worker checked for updates'))
+                .catch(err => console.error('Service worker update check failed:', err));
+            }, 60 * 60 * 1000);
+            
+            // Add listener for new service workers
+            registration.addEventListener('updatefound', () => {
+              // A new service worker is installing
+              const newWorker = registration.installing;
+              console.log('New service worker found!', newWorker);
+              
+              // Wait for the new service worker to install
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version available
+                  console.log('New version available! Refreshing...');
+                  // Notify the user and reload the page
+                  if (confirm('A new version is available. Reload now?')) {
+                    window.location.reload();
+                  }
+                }
+              });
+            });
+          } catch (err) {
+            console.error('Service worker registration failed:', err);
+          }
         });
+        
+        // Add listener for controlling service worker changes
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          console.log('Service worker controller changed');
+        });
+        
+        // Function to clear cache and reload
+        window.clearCacheAndReload = () => {
+          if ('caches' in window) {
+            caches.keys().then(cacheNames => {
+              cacheNames.forEach(cacheName => {
+                caches.delete(cacheName);
+              });
+              console.log('Caches cleared');
+              window.location.reload(true);
+            });
+          }
+        };
       }
     </script>
   </body>
