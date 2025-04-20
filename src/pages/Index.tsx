@@ -10,19 +10,18 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { 
-  Tooltip, 
-  TooltipContent, 
-  TooltipProvider, 
-  TooltipTrigger 
-} from "@/components/ui/tooltip";
-
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 const Index = () => {
   const [projects, setProjects] = useState<Project[]>([]);
-  const { toast } = useToast();
-  const { user, signOut, isGuest } = useAuth();
+  const {
+    toast
+  } = useToast();
+  const {
+    user,
+    signOut,
+    isGuest
+  } = useAuth();
   const navigate = useNavigate();
-
   useEffect(() => {
     const loadUserProjects = async () => {
       if (isGuest) {
@@ -30,13 +29,11 @@ const Index = () => {
         setProjects(storedProjects);
       } else if (user) {
         try {
-          const { data, error } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('created_by', user.id);
-            
+          const {
+            data,
+            error
+          } = await supabase.from('projects').select('*').eq('created_by', user.id);
           if (error) throw error;
-          
           if (data && data.length > 0) {
             const transformedProjects: Project[] = data.map(item => ({
               id: item.id,
@@ -47,7 +44,6 @@ const Index = () => {
               note: '',
               tags: []
             }));
-            
             setProjects(transformedProjects);
           } else {
             const storedProjects = loadProjects();
@@ -60,37 +56,31 @@ const Index = () => {
             description: "Failed to load your projects from the database",
             variant: "destructive"
           });
-          
           const storedProjects = loadProjects();
           setProjects(storedProjects);
         }
       }
     };
-    
     loadUserProjects();
   }, [user, isGuest, toast]);
-
   useEffect(() => {
     const saveUserProjects = async () => {
       if (projects.length === 0) return;
-      
       if (isGuest) {
         saveProjects(projects);
       } else if (user) {
         try {
           saveProjects(projects);
-          
           for (const project of projects) {
-            const { error } = await supabase
-              .from('projects')
-              .upsert({
-                id: project.id,
-                name: project.name,
-                description: project.description,
-                created_by: user.id,
-                note: project.note
-              });
-              
+            const {
+              error
+            } = await supabase.from('projects').upsert({
+              id: project.id,
+              name: project.name,
+              description: project.description,
+              created_by: user.id,
+              note: project.note
+            });
             if (error) {
               console.error('Error saving project to Supabase:', error);
             }
@@ -100,53 +90,39 @@ const Index = () => {
         }
       }
     };
-    
     saveUserProjects();
   }, [projects, user, isGuest]);
-
   const handleProjectCreate = (newProject: Project) => {
     setProjects([...projects, newProject]);
     toast({
       title: "Project created",
-      description: "Your new project has been created successfully.",
+      description: "Your new project has been created successfully."
     });
   };
-
   const handleProjectUpdate = (updatedProject: Project) => {
-    setProjects(
-      projects.map((project) =>
-        project.id === updatedProject.id ? updatedProject : project
-      )
-    );
+    setProjects(projects.map(project => project.id === updatedProject.id ? updatedProject : project));
   };
-
   const handleProjectDelete = (projectId: string) => {
     const deleteProject = async () => {
-      setProjects(projects.filter((project) => project.id !== projectId));
-      
+      setProjects(projects.filter(project => project.id !== projectId));
       if (user) {
         try {
-          const { error } = await supabase
-            .from('projects')
-            .delete()
-            .eq('id', projectId);
-            
+          const {
+            error
+          } = await supabase.from('projects').delete().eq('id', projectId);
           if (error) throw error;
         } catch (error) {
           console.error('Failed to delete project from Supabase:', error);
         }
       }
     };
-    
     deleteProject();
-    
     toast({
       title: "Project deleted",
       description: "Your project has been deleted successfully.",
-      variant: "destructive",
+      variant: "destructive"
     });
   };
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -159,9 +135,7 @@ const Index = () => {
       });
     }
   };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-background to-background/95 dark:from-background dark:to-background/90 transition-colors duration-1000">
+  return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 dark:from-background dark:to-background/90 transition-colors duration-1000">
       <div className="container py-8 max-w-4xl mx-auto px-4">
         <header className="mb-10 text-center">
           <div className="inline-flex items-center justify-center gap-4 mb-4">
@@ -169,18 +143,16 @@ const Index = () => {
           </div>
           <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary dark:from-primary dark:via-primary/80 dark:to-primary/60">
             <span className="inline-flex items-center">
-              <Zap className="w-10 h-10 mr-2 animate-pulse-slow text-primary" />
+              
               ProPulse
             </span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mx-auto">
             Track every pulse of your projects
           </p>
-          {isGuest && (
-            <div className="mt-2 text-sm text-amber-500 dark:text-amber-400 font-medium">
+          {isGuest && <div className="mt-2 text-sm text-amber-500 dark:text-amber-400 font-medium">
               Guest Mode: Data is stored locally
-            </div>
-          )}
+            </div>}
         </header>
 
         <div className="mb-6 flex justify-center">
@@ -188,24 +160,13 @@ const Index = () => {
         </div>
 
         <div className="space-y-5">
-          {projects.length === 0 ? (
-            <div className="text-center py-16 bg-muted/5 backdrop-blur-sm rounded-lg border border-dashed border-muted/30">
+          {projects.length === 0 ? <div className="text-center py-16 bg-muted/5 backdrop-blur-sm rounded-lg border border-dashed border-muted/30">
               <Zap className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <h3 className="text-xl font-medium mb-2">No projects yet</h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 Create your first project to get started tracking status with our futuristic dashboard
               </p>
-            </div>
-          ) : (
-            projects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onUpdate={handleProjectUpdate}
-                onDelete={handleProjectDelete}
-              />
-            ))
-          )}
+            </div> : projects.map(project => <ProjectCard key={project.id} project={project} onUpdate={handleProjectUpdate} onDelete={handleProjectDelete} />)}
         </div>
       </div>
       
@@ -215,12 +176,7 @@ const Index = () => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    onClick={() => navigate('/settings')}
-                    className="rounded-full"
-                  >
+                  <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="rounded-full">
                     <Settings className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
@@ -231,17 +187,12 @@ const Index = () => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    className="rounded-full"
-                    onClick={() => {
-                      toast({
-                        title: "ProPulse",
-                        description: "Version 1.0.0 - Track every pulse of your projects"
-                      });
-                    }}
-                  >
+                  <Button variant="ghost" size="icon" className="rounded-full" onClick={() => {
+                  toast({
+                    title: "ProPulse",
+                    description: "Version 1.0.0 - Track every pulse of your projects"
+                  });
+                }}>
                     <Info className="h-5 w-5" />
                   </Button>
                 </TooltipTrigger>
@@ -254,8 +205,6 @@ const Index = () => {
           </p>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
