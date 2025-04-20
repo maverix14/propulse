@@ -161,13 +161,12 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
     const userToUpdate = project.users.find(user => user.id === userId);
     if (!userToUpdate) return;
     
-    if (userToUpdate.level === UserLevel.Level1 && 
-        hasReachedDailyLimit(userToUpdate, currentDate) && 
-        value > (userToUpdate.dailyStatus?.[currentDate] || 0)) {
+    if (value > 5 && value > (userToUpdate.dailyStatus?.[currentDate] || 0)) {
       toast({
         title: "Daily limit reached",
-        description: "Level 1 users can only add up to 5 points per day.",
-        variant: "destructive"
+        description: "Maximum 5 points per day allowed",
+        variant: "destructive",
+        duration: 3000,
       });
       return;
     }
@@ -177,7 +176,8 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
       toast({
         title: "Monthly limit reached",
         description: `Level ${userToUpdate.level} users can only add up to ${userToUpdate.level === UserLevel.Level1 ? 30 : 100} points per month.`,
-        variant: "destructive"
+        variant: "destructive",
+        duration: 3000,
       });
       return;
     }
@@ -280,7 +280,7 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
             <div className="flex items-center space-x-3">
               <div className="relative h-6 w-6 flex items-center justify-center text-primary dark:text-primary">
                 <FontAwesomeIcon icon={getProjectIcon()} className="h-5 w-5" />
-                <div className="absolute inset-0 blur-md rounded-full bg-primary/10 dark:bg-primary/20"></div>
+                <div className="absolute inset-0 blur-md rounded-full bg-primary/10"></div>
               </div>
               <div className="flex-1">
                 <CardTitle className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent dark:from-primary dark:to-primary/60">

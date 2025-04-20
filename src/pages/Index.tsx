@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 const Index = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const {
@@ -22,6 +23,7 @@ const Index = () => {
     isGuest
   } = useAuth();
   const navigate = useNavigate();
+
   useEffect(() => {
     const loadUserProjects = async () => {
       if (isGuest) {
@@ -63,6 +65,7 @@ const Index = () => {
     };
     loadUserProjects();
   }, [user, isGuest, toast]);
+
   useEffect(() => {
     const saveUserProjects = async () => {
       if (projects.length === 0) return;
@@ -92,6 +95,7 @@ const Index = () => {
     };
     saveUserProjects();
   }, [projects, user, isGuest]);
+
   const handleProjectCreate = (newProject: Project) => {
     setProjects([...projects, newProject]);
     toast({
@@ -99,9 +103,11 @@ const Index = () => {
       description: "Your new project has been created successfully."
     });
   };
+
   const handleProjectUpdate = (updatedProject: Project) => {
     setProjects(projects.map(project => project.id === updatedProject.id ? updatedProject : project));
   };
+
   const handleProjectDelete = (projectId: string) => {
     const deleteProject = async () => {
       setProjects(projects.filter(project => project.id !== projectId));
@@ -123,6 +129,7 @@ const Index = () => {
       variant: "destructive"
     });
   };
+
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -135,24 +142,39 @@ const Index = () => {
       });
     }
   };
+
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 dark:from-background dark:to-background/90 transition-colors duration-1000">
       <div className="container py-8 max-w-4xl mx-auto px-4">
         <header className="mb-10 text-center">
           <div className="inline-flex items-center justify-center gap-4 mb-4">
             <ThemeToggle />
           </div>
-          <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-primary via-accent to-primary dark:from-primary dark:via-primary/80 dark:to-primary/60">
+          <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-zinc-700 via-zinc-500 to-zinc-600 dark:from-zinc-300 dark:via-zinc-400 dark:to-zinc-500">
             <span className="inline-flex items-center">
-              
               ProPulse
             </span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mx-auto">
             Track every pulse of your projects
           </p>
-          {isGuest && <div className="mt-2 text-sm text-amber-500 dark:text-amber-400 font-medium">
-              Guest Mode: Data is stored locally
-            </div>}
+          {isGuest ? (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+              onClick={() => navigate('/auth')}
+            >
+              Guest Mode
+            </Button>
+          ) : (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
+            >
+              Online
+            </Button>
+          )}
         </header>
 
         <div className="mb-6 flex justify-center">
@@ -207,4 +229,5 @@ const Index = () => {
       </footer>
     </div>;
 };
+
 export default Index;
