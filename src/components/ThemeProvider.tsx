@@ -20,11 +20,8 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Load theme from localStorage
     const savedTheme = localStorage.getItem("project-pulse-theme") as Theme | null;
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    
-    // Set initial theme based on localStorage or system preference
     setTheme(savedTheme || (prefersDark ? "dark" : "light"));
     setIsInitialized(true);
   }, []);
@@ -32,14 +29,17 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!isInitialized) return;
     
-    // Apply theme to document
+    // Apply theme to document with transition
+    document.documentElement.style.setProperty('transition', 'background-color 3s ease');
+    
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
+      document.body.classList.remove("light");
     } else {
       document.documentElement.classList.remove("dark");
+      document.body.classList.add("light");
     }
     
-    // Save theme to localStorage
     localStorage.setItem("project-pulse-theme", theme);
   }, [theme, isInitialized]);
 

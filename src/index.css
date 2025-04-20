@@ -88,8 +88,14 @@
   * {
     @apply border-border;
   }
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-3000;
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)/95) 100%);
+  }
+
+  body.light {
+    background: linear-gradient(180deg, #f8f8f8 0%, #f3f3f3 100%);
   }
 }
 
