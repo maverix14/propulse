@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,11 +24,26 @@ const Settings = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user, isGuest, isOnline } = useAuth();
-  const [userLevels, setUserLevels] = useState<UserLevelSetting[]>([
-    { id: 1, name: "Level 1", dailyLimit: 5, monthlyLimit: 30, isEditing: false },
-    { id: 2, name: "Level 2", dailyLimit: null, monthlyLimit: 100, isEditing: false }
-  ]);
+  
+  // Use local storage for user levels to persist changes
+  const getStoredLevels = (): UserLevelSetting[] => {
+    const storedLevels = localStorage.getItem('userLevelSettings');
+    if (storedLevels) {
+      return JSON.parse(storedLevels);
+    }
+    return [
+      { id: 1, name: "Level 1", dailyLimit: 5, monthlyLimit: 30, isEditing: false },
+      { id: 2, name: "Level 2", dailyLimit: null, monthlyLimit: 100, isEditing: false }
+    ];
+  };
+  
+  const [userLevels, setUserLevels] = useState<UserLevelSetting[]>(getStoredLevels);
   const [newLevel, setNewLevel] = useState<UserLevelSetting | null>(null);
+
+  // Save user levels to local storage whenever they change
+  useEffect(() => {
+    localStorage.setItem('userLevelSettings', JSON.stringify(userLevels));
+  }, [userLevels]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,7 +103,8 @@ const Settings = () => {
   const addNewLevel = () => {
     if (newLevel) {
       const nextId = Math.max(...userLevels.map(l => l.id)) + 1;
-      setUserLevels([...userLevels, { ...newLevel, id: nextId, isEditing: false }]);
+      const updatedLevels = [...userLevels, { ...newLevel, id: nextId, isEditing: false }];
+      setUserLevels(updatedLevels);
       setNewLevel(null);
       toast({
         title: "Level Added",
@@ -122,7 +138,8 @@ const Settings = () => {
       return;
     }
     
-    setUserLevels(userLevels.filter(level => level.id !== id));
+    const updatedLevels = userLevels.filter(level => level.id !== id);
+    setUserLevels(updatedLevels);
     toast({
       title: "Level Deleted",
       description: "User level has been removed"
@@ -298,7 +315,7 @@ const Settings = () => {
                     <div>
                       <div className="flex justify-between items-center">
                         <h3 className="font-medium flex items-center">
-                          <span className="font-semibold mr-2">{level.id}</span>
+                          <span className="mr-2">{level.id}</span>
                           {level.name}
                         </h3>
                         <div className="flex gap-2">

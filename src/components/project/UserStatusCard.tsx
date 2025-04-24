@@ -34,7 +34,7 @@ export const UserStatusCard = ({
   const { toast } = useToast();
   
   const getUserStatus = (user: User, date: string): StatusLevel => {
-    // Start from 0 for daily status, or get existing status
+    // Get existing status or return 0 (not 1)
     const status = user.dailyStatus && date in user.dailyStatus ? user.dailyStatus[date] : 0;
     return (status as StatusLevel) || 0 as StatusLevel;
   };

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent } from "./ui/card";
 import { Project, StatusLevel, User as UserType, UserLevel, getProjectStats, hasReachedDailyLimit, hasReachedMonthlyLimit } from "@/types";
@@ -129,7 +130,7 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
     
     const monthlySum = Object.entries(dailyStatus)
       .filter(([date]) => date.startsWith(currentMonth))
-      .reduce((sum, [, status]) => sum + status, 0);
+      .reduce((sum, [, status]) => sum + (status || 0), 0);
     
     monthlyStatus[currentMonth] = monthlySum;
     updatedUser.monthlyStatus = monthlyStatus;

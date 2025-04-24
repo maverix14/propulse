@@ -1,6 +1,7 @@
+
 // Define the core types for the application
 // Define the status level type (this was missing)
-export type StatusLevel = 1 | 2 | 3 | 4 | 5;
+export type StatusLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
 export interface User {
   id: string;

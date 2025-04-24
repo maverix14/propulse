@@ -1,12 +1,12 @@
 // Cache version - change this when deploying new app versions to invalidate old cache
 const CACHE_VERSION = 'project-pulse-v5';
-const CACHE_DISPLAY_THRESHOLD = 60 * 1000; // 1 minute between update notifications
-const UPDATE_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes between update checks
+const CACHE_DISPLAY_THRESHOLD = 60 * 60 * 1000; // 1 hour between update notifications (increased from 1 minute)
+const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours between update checks (increased from 30 minutes)
 
 // Keep track of when we last showed an update notification
-self._lastUpdateNotification = 0;
+let _lastUpdateNotification = Date.now() - (2 * CACHE_DISPLAY_THRESHOLD); // Ensure we can show one notification on first load
 // Keep track of when we last checked for updates
-self._lastUpdateCheck = 0;
+let _lastUpdateCheck = Date.now() - (2 * UPDATE_CHECK_INTERVAL); // Ensure we can check for updates on first load
 
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing with cache version:', CACHE_VERSION);
@@ -135,17 +135,18 @@ self.addEventListener('message', (event) => {
     const now = Date.now();
     
     // Check if we recently checked for updates
-    if (now - self._lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
+    if (now - _lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
       event.ports[0].postMessage({ 
         result: 'check-throttled' 
       });
       return;
     }
     
-    self._lastUpdateCheck = now;
+    _lastUpdateCheck = now;
     
-    if (now - self._lastUpdateNotification > CACHE_DISPLAY_THRESHOLD) {
-      self._lastUpdateNotification = now;
+    // Check if enough time has passed since the last notification
+    if (now - _lastUpdateNotification > CACHE_DISPLAY_THRESHOLD) {
+      _lastUpdateNotification = now;
       // Only respond if we haven't notified recently
       event.ports[0].postMessage({ 
         result: 'update-available' 
@@ -161,17 +162,16 @@ self.addEventListener('message', (event) => {
     const now = Date.now();
     
     // Check if we recently checked for updates
-    if (now - self._lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
+    if (now - _lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
       event.ports[0].postMessage({ 
         result: 'no-update' 
       });
       return;
     }
     
-    self._lastUpdateCheck = now;
+    _lastUpdateCheck = now;
     
-    // Here would be logic to check for a real update
-    // For now, just report no update
+    // Check for real updates - for now, just report no update to avoid false notifications
     event.ports[0].postMessage({ 
       result: 'no-update' 
     });
