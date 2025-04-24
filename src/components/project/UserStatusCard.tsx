@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { StatusSelector } from "@/components/StatusSelector";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
 
 interface UserStatusCardProps {
   user: User;
@@ -32,11 +33,6 @@ export const UserStatusCard = ({
   const [noteText, setNoteText] = useState<string>(user.note || "");
   const { toast } = useToast();
   
-  const dailyStatus = getUserStatus(user, currentDate);
-  const monthlyStatus = getUserMonthlyStatus(user, currentMonth);
-  const progressLimit = getProgressLimit(user);
-  const hasHitMonthlyLimit = hasReachedMonthlyLimit(user, currentMonth);
-  
   const getUserStatus = (user: User, date: string): StatusLevel => {
     const status = (user.dailyStatus && user.dailyStatus[date]) || 1;
     return Math.max(1, Math.min(5, status)) as StatusLevel;
@@ -49,6 +45,11 @@ export const UserStatusCard = ({
   const getProgressLimit = (user: User) => {
     return user.level === UserLevel.Level1 ? 30 : 100;
   };
+  
+  const dailyStatus = getUserStatus(user, currentDate);
+  const monthlyStatus = getUserMonthlyStatus(user, currentMonth);
+  const progressLimit = getProgressLimit(user);
+  const hasHitMonthlyLimit = hasReachedMonthlyLimit(user, currentMonth);
   
   const getUserLevelBadge = (level: UserLevel) => {
     return (

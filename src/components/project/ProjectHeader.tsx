@@ -1,5 +1,5 @@
 
-import { ChevronDown, ChevronUp, Users, Zap } from "lucide-react";
+import { ChevronDown, ChevronUp, Users, Zap, Github } from "lucide-react";
 import { CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { 

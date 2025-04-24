@@ -12,6 +12,7 @@ type AuthContextType = {
   signOut: () => Promise<void>;
   continueAsGuest: () => void;
   isInitialized: boolean;
+  isOnline: boolean;
 };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -21,12 +22,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isGuest, setIsGuest] = useState<boolean>(false);
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+
+  // Set up online/offline detection
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     // Check if user was previously in guest mode
     const wasGuest = localStorage.getItem('isGuestMode') === 'true';
-    if (wasGuest) {
+    if (wasGuest || !isOnline) {
       setIsGuest(true);
+      if (!isOnline) {
+        localStorage.setItem('isGuestMode', 'true');
+      }
     }
 
     // Set up auth state listener
@@ -53,9 +72,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [isOnline]);
 
   const signIn = async (email: string, password: string) => {
+    if (!isOnline) {
+      throw new Error('You are currently offline. Please connect to the internet to sign in.');
+    }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw error;
     setIsGuest(false);
@@ -63,6 +85,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string) => {
+    if (!isOnline) {
+      throw new Error('You are currently offline. Please connect to the internet to sign up.');
+    }
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
   };
@@ -88,7 +113,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       signUp, 
       signOut, 
       continueAsGuest,
-      isInitialized
+      isInitialized,
+      isOnline
     }}>
       {children}
     </AuthContext.Provider>
