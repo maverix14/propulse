@@ -11,7 +11,6 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
 const Index = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const {
@@ -23,7 +22,6 @@ const Index = () => {
     isGuest
   } = useAuth();
   const navigate = useNavigate();
-
   useEffect(() => {
     const loadUserProjects = async () => {
       if (isGuest) {
@@ -65,7 +63,6 @@ const Index = () => {
     };
     loadUserProjects();
   }, [user, isGuest, toast]);
-
   useEffect(() => {
     const saveUserProjects = async () => {
       if (projects.length === 0) return;
@@ -95,7 +92,6 @@ const Index = () => {
     };
     saveUserProjects();
   }, [projects, user, isGuest]);
-
   const handleProjectCreate = (newProject: Project) => {
     setProjects([...projects, newProject]);
     toast({
@@ -103,11 +99,9 @@ const Index = () => {
       description: "Your new project has been created successfully."
     });
   };
-
   const handleProjectUpdate = (updatedProject: Project) => {
     setProjects(projects.map(project => project.id === updatedProject.id ? updatedProject : project));
   };
-
   const handleProjectDelete = (projectId: string) => {
     const deleteProject = async () => {
       setProjects(projects.filter(project => project.id !== projectId));
@@ -129,7 +123,6 @@ const Index = () => {
       variant: "destructive"
     });
   };
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -142,7 +135,6 @@ const Index = () => {
       });
     }
   };
-
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 dark:from-background dark:to-background/90 transition-colors duration-1000">
       <div className="container py-8 max-w-4xl mx-auto px-4">
         <header className="mb-10 text-center">
@@ -157,24 +149,11 @@ const Index = () => {
           <p className="text-muted-foreground text-lg max-w-md mx-auto">
             Track every pulse of your projects
           </p>
-          {isGuest ? (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-              onClick={() => navigate('/auth')}
-            >
+          {isGuest ? <Button variant="outline" size="sm" className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => navigate('/auth')}>
               Guest Mode
-            </Button>
-          ) : (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20"
-            >
+            </Button> : <Button variant="outline" size="sm" className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
               Online
-            </Button>
-          )}
+            </Button>}
         </header>
 
         <div className="mb-6 flex justify-center">
@@ -209,25 +188,15 @@ const Index = () => {
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full" onClick={() => {
-                  toast({
-                    title: "ProPulse",
-                    description: "Version 1.0.0 - Track every pulse of your projects"
-                  });
-                }}>
-                    <Info className="h-5 w-5" />
-                  </Button>
+                  
                 </TooltipTrigger>
                 <TooltipContent>About</TooltipContent>
               </Tooltip>
             </TooltipProvider>
           </div>
-          <p className="text-center text-xs text-muted-foreground mt-4">
-            ProPulse v1.0.0
-          </p>
+          
         </div>
       </footer>
     </div>;
 };
-
 export default Index;
