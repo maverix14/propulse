@@ -34,8 +34,9 @@ export const UserStatusCard = ({
   const { toast } = useToast();
   
   const getUserStatus = (user: User, date: string): StatusLevel => {
-    const status = (user.dailyStatus && user.dailyStatus[date]) || 1;
-    return Math.max(1, Math.min(5, status)) as StatusLevel;
+    // Start from 0 for daily status, or get existing status
+    const status = user.dailyStatus && date in user.dailyStatus ? user.dailyStatus[date] : 0;
+    return (status as StatusLevel) || 0 as StatusLevel;
   };
 
   const getUserMonthlyStatus = (user: User, month: string): number => {
@@ -46,16 +47,21 @@ export const UserStatusCard = ({
     return user.level === UserLevel.Level1 ? 30 : 100;
   };
   
+  const getDailyLimit = (user: User) => {
+    return user.level === UserLevel.Level1 ? 5 : null;
+  };
+  
   const dailyStatus = getUserStatus(user, currentDate);
   const monthlyStatus = getUserMonthlyStatus(user, currentMonth);
   const progressLimit = getProgressLimit(user);
+  const dailyLimit = getDailyLimit(user);
   const hasHitMonthlyLimit = hasReachedMonthlyLimit(user, currentMonth);
   
   const getUserLevelBadge = (level: UserLevel) => {
     return (
       <Badge variant={level === UserLevel.Level1 ? "outline" : "secondary"} 
         className="ml-2 text-xs flex items-center">
-        <Shield className="h-3 w-3" />
+        <Shield className="h-3 w-3 mr-1" />
         {level}
       </Badge>
     );
@@ -103,11 +109,11 @@ export const UserStatusCard = ({
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
               <span>Daily</span>
               <span className="font-mono">
-                {dailyStatus}/{user.level === UserLevel.Level1 ? "5" : "∞"}
+                {dailyStatus}/{dailyLimit ? dailyLimit : "∞"}
               </span>
             </div>
             <StatusSelector 
-              value={dailyStatus}
+              value={dailyStatus as StatusLevel}
               onChange={(value) => onStatusChange(user.id, value)}
               disabled={hasHitMonthlyLimit}
             />

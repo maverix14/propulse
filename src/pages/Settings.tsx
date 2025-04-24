@@ -297,7 +297,10 @@ const Settings = () => {
                   ) : (
                     <div>
                       <div className="flex justify-between items-center">
-                        <h3 className="font-medium">{level.name}</h3>
+                        <h3 className="font-medium flex items-center">
+                          <span className="font-semibold mr-2">{level.id}</span>
+                          {level.name}
+                        </h3>
                         <div className="flex gap-2">
                           <Button variant="outline" size="sm" onClick={() => startEditing(level.id)}>
                             Edit
@@ -419,7 +422,7 @@ const Settings = () => {
       </div>
       
       <footer className="py-6 text-center text-sm text-muted-foreground">
-        <p>Project Pulse v1.2.0</p>
+        <p>ProPulse v2.0.0</p>
       </footer>
     </div>
   );

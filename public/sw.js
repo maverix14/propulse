@@ -1,9 +1,12 @@
 // Cache version - change this when deploying new app versions to invalidate old cache
-const CACHE_VERSION = 'project-pulse-v4';
+const CACHE_VERSION = 'project-pulse-v5';
 const CACHE_DISPLAY_THRESHOLD = 60 * 1000; // 1 minute between update notifications
+const UPDATE_CHECK_INTERVAL = 30 * 60 * 1000; // 30 minutes between update checks
 
 // Keep track of when we last showed an update notification
 self._lastUpdateNotification = 0;
+// Keep track of when we last checked for updates
+self._lastUpdateCheck = 0;
 
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing with cache version:', CACHE_VERSION);
@@ -130,6 +133,17 @@ self.addEventListener('message', (event) => {
   } else if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
     // Check if enough time has passed since last notification
     const now = Date.now();
+    
+    // Check if we recently checked for updates
+    if (now - self._lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
+      event.ports[0].postMessage({ 
+        result: 'check-throttled' 
+      });
+      return;
+    }
+    
+    self._lastUpdateCheck = now;
+    
     if (now - self._lastUpdateNotification > CACHE_DISPLAY_THRESHOLD) {
       self._lastUpdateNotification = now;
       // Only respond if we haven't notified recently
@@ -142,5 +156,24 @@ self.addEventListener('message', (event) => {
         result: 'notification-throttled' 
       });
     }
+  } else if (event.data && event.data.type === 'CHECK_VERSION') {
+    // New message type to just check if an update is available without notifications
+    const now = Date.now();
+    
+    // Check if we recently checked for updates
+    if (now - self._lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
+      event.ports[0].postMessage({ 
+        result: 'no-update' 
+      });
+      return;
+    }
+    
+    self._lastUpdateCheck = now;
+    
+    // Here would be logic to check for a real update
+    // For now, just report no update
+    event.ports[0].postMessage({ 
+      result: 'no-update' 
+    });
   }
 });

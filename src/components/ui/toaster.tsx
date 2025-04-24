@@ -16,6 +16,7 @@ export function Toaster() {
   const { toasts, dismiss, toast } = useToast()
   const [appVersion, setAppVersion] = useState<string | null>(null);
   const [lastUpdateCheck, setLastUpdateCheck] = useState<number>(Date.now());
+  const [checkedVersions, setCheckedVersions] = useState<Set<string>>(new Set());
 
   // Auto-dismiss toasts after 3 seconds
   useEffect(() => {
@@ -30,13 +31,13 @@ export function Toaster() {
     })
   }, [toasts, dismiss])
 
-  // Check for app updates on load - with throttling
+  // Check for app updates on load - with significant throttling
   useEffect(() => {
-    // Check for app version from URL and manifest
-    const fetchManifestVersion = async () => {
-      // Don't check too frequently
+    // Helper function to clear the cache and reload
+    const checkForAppUpdates = async () => {
+      // Don't check too frequently - at least 30 minutes between update checks
       const now = Date.now();
-      if (now - lastUpdateCheck < 60000) { // 1 minute
+      if (now - lastUpdateCheck < 30 * 60 * 1000) { // 30 minutes
         return;
       }
       setLastUpdateCheck(now);
@@ -46,39 +47,46 @@ export function Toaster() {
         const manifest = await response.json();
         
         const urlParams = new URLSearchParams(window.location.search);
-        const currentVersion = urlParams.get('version');
+        const currentVersion = urlParams.get('version') || localStorage.getItem('appVersion');
         
-        // If version from URL doesn't match manifest version, we have an update
-        if (currentVersion && manifest.version && currentVersion !== manifest.version) {
-          console.log(`App version changed from ${currentVersion} to ${manifest.version}, clearing cache`);
-          setAppVersion(manifest.version);
+        // Store the current version
+        if (manifest.version && (!currentVersion || currentVersion !== manifest.version)) {
+          localStorage.setItem('appVersion', manifest.version);
           
-          // Only show update notification if we haven't recently
-          const lastShown = localStorage.getItem('lastUpdateNotification');
-          const lastShownTime = lastShown ? parseInt(lastShown, 10) : 0;
-          
-          if (now - lastShownTime > 60000) { // 1 minute
-            localStorage.setItem('lastUpdateNotification', now.toString());
+          // Only show update notification if we haven't already shown one for this version
+          // and we have a previous version to compare against
+          if (currentVersion && !checkedVersions.has(manifest.version)) {
+            const newCheckedVersions = new Set(checkedVersions);
+            newCheckedVersions.add(manifest.version);
+            setCheckedVersions(newCheckedVersions);
             
-            toast({
-              title: "App Update Available",
-              description: "A new version is available. Click to update.",
-              action: (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="gap-1" 
-                  onClick={() => {
-                    clearCache().then(() => {
-                      window.location.href = `/?version=${manifest.version}`;
-                    });
-                  }}
-                >
-                  <RotateCw className="h-4 w-4 mr-1" />
-                  Update
-                </Button>
-              )
-            });
+            // Only show notification if last one was at least 1 hour ago
+            const lastShown = localStorage.getItem('lastUpdateNotification');
+            const lastShownTime = lastShown ? parseInt(lastShown, 10) : 0;
+            
+            if (now - lastShownTime > 60 * 60 * 1000) { // 1 hour
+              localStorage.setItem('lastUpdateNotification', now.toString());
+              
+              toast({
+                title: "App Update Available",
+                description: "A new version is available. Click to update.",
+                action: (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="gap-1" 
+                    onClick={() => {
+                      clearCache().then(() => {
+                        window.location.href = `/?version=${manifest.version}`;
+                      });
+                    }}
+                  >
+                    <RotateCw className="h-4 w-4 mr-1" />
+                    Update
+                  </Button>
+                )
+              });
+            }
           }
         }
       } catch (error) {
@@ -86,8 +94,14 @@ export function Toaster() {
       }
     };
     
-    fetchManifestVersion();
-  }, [toast]);
+    // Check once on load
+    checkForAppUpdates();
+    
+    // And set up an interval for checking, but very infrequently
+    const checkInterval = setInterval(checkForAppUpdates, 60 * 60 * 1000); // 1 hour
+    
+    return () => clearInterval(checkInterval);
+  }, [toast, checkedVersions]);
 
   // Register a listener for service worker updates
   useEffect(() => {
@@ -101,7 +115,7 @@ export function Toaster() {
         const lastShown = localStorage.getItem('lastUpdateToast');
         const lastShownTime = lastShown ? parseInt(lastShown, 10) : 0;
         
-        if (now - lastShownTime > 60000) { // 1 minute
+        if (now - lastShownTime > 60 * 60 * 1000) { // 1 hour
           localStorage.setItem('lastUpdateToast', now.toString());
           
           toast({
