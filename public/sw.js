@@ -1,6 +1,9 @@
-
 // Cache version - change this when deploying new app versions to invalidate old cache
-const CACHE_VERSION = 'project-pulse-v3';
+const CACHE_VERSION = 'project-pulse-v4';
+const CACHE_DISPLAY_THRESHOLD = 60 * 1000; // 1 minute between update notifications
+
+// Keep track of when we last showed an update notification
+self._lastUpdateNotification = 0;
 
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing with cache version:', CACHE_VERSION);
@@ -124,5 +127,20 @@ self.addEventListener('message', (event) => {
         });
       })
     );
+  } else if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
+    // Check if enough time has passed since last notification
+    const now = Date.now();
+    if (now - self._lastUpdateNotification > CACHE_DISPLAY_THRESHOLD) {
+      self._lastUpdateNotification = now;
+      // Only respond if we haven't notified recently
+      event.ports[0].postMessage({ 
+        result: 'update-available' 
+      });
+    } else {
+      // Too soon for another notification
+      event.ports[0].postMessage({ 
+        result: 'notification-throttled' 
+      });
+    }
   }
 });

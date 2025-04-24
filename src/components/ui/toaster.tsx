@@ -15,6 +15,7 @@ import { RotateCw } from "lucide-react"
 export function Toaster() {
   const { toasts, dismiss, toast } = useToast()
   const [appVersion, setAppVersion] = useState<string | null>(null);
+  const [lastUpdateCheck, setLastUpdateCheck] = useState<number>(Date.now());
 
   // Auto-dismiss toasts after 3 seconds
   useEffect(() => {
@@ -29,10 +30,17 @@ export function Toaster() {
     })
   }, [toasts, dismiss])
 
-  // Check for app updates on load
+  // Check for app updates on load - with throttling
   useEffect(() => {
     // Check for app version from URL and manifest
     const fetchManifestVersion = async () => {
+      // Don't check too frequently
+      const now = Date.now();
+      if (now - lastUpdateCheck < 60000) { // 1 minute
+        return;
+      }
+      setLastUpdateCheck(now);
+      
       try {
         const response = await fetch('/manifest.json?nocache=' + Date.now());
         const manifest = await response.json();
@@ -45,25 +53,33 @@ export function Toaster() {
           console.log(`App version changed from ${currentVersion} to ${manifest.version}, clearing cache`);
           setAppVersion(manifest.version);
           
-          toast({
-            title: "App Update Available",
-            description: "A new version is available. Click to update.",
-            action: (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="gap-1" 
-                onClick={() => {
-                  clearCache().then(() => {
-                    window.location.href = `/?version=${manifest.version}`;
-                  });
-                }}
-              >
-                <RotateCw className="h-4 w-4 mr-1" />
-                Update
-              </Button>
-            )
-          });
+          // Only show update notification if we haven't recently
+          const lastShown = localStorage.getItem('lastUpdateNotification');
+          const lastShownTime = lastShown ? parseInt(lastShown, 10) : 0;
+          
+          if (now - lastShownTime > 60000) { // 1 minute
+            localStorage.setItem('lastUpdateNotification', now.toString());
+            
+            toast({
+              title: "App Update Available",
+              description: "A new version is available. Click to update.",
+              action: (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="gap-1" 
+                  onClick={() => {
+                    clearCache().then(() => {
+                      window.location.href = `/?version=${manifest.version}`;
+                    });
+                  }}
+                >
+                  <RotateCw className="h-4 w-4 mr-1" />
+                  Update
+                </Button>
+              )
+            });
+          }
         }
       } catch (error) {
         console.error('Failed to check for app updates:', error);
@@ -79,10 +95,20 @@ export function Toaster() {
       navigator.serviceWorker.addEventListener('controllerchange', () => {
         // Notify user that the app has been updated
         console.log('Service worker controller has changed - app updated');
-        toast({
-          title: "App Updated",
-          description: "The application has been updated to the latest version."
-        });
+        
+        // Only show toast if we haven't recently shown one
+        const now = Date.now();
+        const lastShown = localStorage.getItem('lastUpdateToast');
+        const lastShownTime = lastShown ? parseInt(lastShown, 10) : 0;
+        
+        if (now - lastShownTime > 60000) { // 1 minute
+          localStorage.setItem('lastUpdateToast', now.toString());
+          
+          toast({
+            title: "App Updated",
+            description: "The application has been updated to the latest version."
+          });
+        }
       });
     }
   }, [toast]);

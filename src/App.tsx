@@ -36,15 +36,17 @@ const LoadingFallback = () => (
   </div>
 );
 
+// Modified route protection that allows guest access
 const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { session, isGuest, isInitialized } = useAuth();
+  const { isInitialized } = useAuth();
   
   // Show loading until authentication is initialized
   if (!isInitialized) {
     return <LoadingFallback />;
   }
   
-  return (session || isGuest) ? children : <Navigate to="/auth" />;
+  // Allow all users (including guests) to access the route
+  return children;
 };
 
 // Component to handle service worker registration and updates

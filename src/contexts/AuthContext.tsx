@@ -20,7 +20,7 @@ const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
-  const [isGuest, setIsGuest] = useState<boolean>(false);
+  const [isGuest, setIsGuest] = useState<boolean>(true); // Default to guest mode
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
 
@@ -39,15 +39,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    // Check if user was previously in guest mode
-    const wasGuest = localStorage.getItem('isGuestMode') === 'true';
-    if (wasGuest || !isOnline) {
-      setIsGuest(true);
-      if (!isOnline) {
-        localStorage.setItem('isGuestMode', 'true');
-      }
-    }
-
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -68,11 +59,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
+      
+      // If user has an active session, they're not a guest
+      if (session) {
+        setIsGuest(false);
+        localStorage.removeItem('isGuestMode');
+      } else {
+        // Default to guest mode for better offline experience
+        setIsGuest(true);
+        localStorage.setItem('isGuestMode', 'true');
+      }
+      
       setIsInitialized(true);
     });
 
     return () => subscription.unsubscribe();
-  }, [isOnline]);
+  }, []);
 
   const signIn = async (email: string, password: string) => {
     if (!isOnline) {
@@ -93,10 +95,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    setIsGuest(false);
-    localStorage.removeItem('isGuestMode');
+    // If online, perform actual sign out
+    if (isOnline && session) {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    }
+    
+    // Always switch to guest mode on sign out
+    setIsGuest(true);
+    localStorage.setItem('isGuestMode', 'true');
   };
 
   const continueAsGuest = () => {
