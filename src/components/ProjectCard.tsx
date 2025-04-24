@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { Card, CardContent } from "./ui/card";
-import { Project, StatusLevel, User as UserType, UserLevel, getProjectStats } from "@/types";
+import { Project, StatusLevel, User as UserType, UserLevel, getProjectStats, hasReachedDailyLimit, hasReachedMonthlyLimit } from "@/types";
 import { getCurrentDate, getCurrentMonth } from "@/utils/dateUtils";
 import { syncUserAcrossProjects } from "@/utils/storageUtils";
 import { useToast } from "@/hooks/use-toast";
