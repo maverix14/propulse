@@ -142,9 +142,7 @@ const Index = () => {
             <ThemeToggle />
           </div>
           <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-zinc-700 via-zinc-500 to-zinc-600 dark:from-zinc-300 dark:via-zinc-400 dark:to-zinc-500">
-            <span className="inline-flex items-center">
-              ProPulse
-            </span>
+            <span className="inline-flex items-center">ProPulsio</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mx-auto">
             Track every pulse of your projects
