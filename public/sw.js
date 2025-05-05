@@ -1,27 +1,19 @@
-// Cache version - change this when deploying new app versions to invalidate old cache
-const CACHE_VERSION = 'project-pulse-v6'; // Incremented version
-const CACHE_DISPLAY_THRESHOLD = 60 * 60 * 1000; // 1 hour between update notifications
-const UPDATE_CHECK_INTERVAL = 12 * 60 * 60 * 1000; // Increased to 12 hours between update checks
-
-// Keep track of when we last showed an update notification - store in indexedDB instead of memory
-const DB_NAME = 'service-worker-state';
-const STORE_NAME = 'timestamps';
-const LAST_UPDATE_NOTIFICATION_KEY = 'lastUpdateNotification';
-const LAST_UPDATE_CHECK_KEY = 'lastUpdateCheck';
+// Cache version - keep this consistent to avoid unnecessary cache purges
+const CACHE_VERSION = 'project-pulse-v6';
 
 // Open the database
 const openDatabase = () => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, 1);
+    const request = indexedDB.open('service-worker-state', 1);
     
-    request.onerror = (event) => {
+    request.onerror = () => {
       reject('Error opening database');
     };
     
     request.onupgradeneeded = (event) => {
       const db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
+      if (!db.objectStoreNames.contains('timestamps')) {
+        db.createObjectStore('timestamps');
       }
     };
     
@@ -35,16 +27,16 @@ const openDatabase = () => {
 const getValue = async (key, defaultValue) => {
   try {
     const db = await openDatabase();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
+    return new Promise((resolve) => {
+      const transaction = db.transaction('timestamps', 'readonly');
+      const store = transaction.objectStore('timestamps');
       const request = store.get(key);
       
-      request.onerror = (event) => {
+      request.onerror = () => {
         resolve(defaultValue);
       };
       
-      request.onsuccess = (event) => {
+      request.onsuccess = () => {
         resolve(request.result || defaultValue);
       };
     });
@@ -58,15 +50,15 @@ const setValue = async (key, value) => {
   try {
     const db = await openDatabase();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
+      const transaction = db.transaction('timestamps', 'readwrite');
+      const store = transaction.objectStore('timestamps');
       const request = store.put(value, key);
       
-      request.onerror = (event) => {
+      request.onerror = () => {
         reject('Error storing value');
       };
       
-      request.onsuccess = (event) => {
+      request.onsuccess = () => {
         resolve();
       };
     });
@@ -185,7 +177,7 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Handle messages from the client
+// Handle messages from the client - only keep essential functionality
 self.addEventListener('message', async (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
@@ -200,9 +192,6 @@ self.addEventListener('message', async (event) => {
         );
       }).then(async () => {
         console.log('All caches cleared');
-        // Reset stored timestamps
-        await setValue(LAST_UPDATE_NOTIFICATION_KEY, 0);
-        await setValue(LAST_UPDATE_CHECK_KEY, 0);
         await setValue('cacheVersion', CACHE_VERSION);
         
         event.ports[0].postMessage({ 
@@ -215,74 +204,5 @@ self.addEventListener('message', async (event) => {
         });
       })
     );
-  } else if (event.data && event.data.type === 'UPDATE_AVAILABLE') {
-    // Check if enough time has passed since last notification
-    const now = Date.now();
-    
-    // Get timestamps from IndexedDB
-    const lastUpdateCheck = await getValue(LAST_UPDATE_CHECK_KEY, 0);
-    
-    // Check if we recently checked for updates
-    if (now - lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
-      event.ports[0].postMessage({ 
-        result: 'check-throttled' 
-      });
-      return;
-    }
-    
-    // Update last check timestamp
-    await setValue(LAST_UPDATE_CHECK_KEY, now);
-    
-    // Compare cache version with current version
-    const storedVersion = await getValue('cacheVersion', '');
-    if (storedVersion !== CACHE_VERSION) {
-      // Version mismatch - update available
-      const lastNotification = await getValue(LAST_UPDATE_NOTIFICATION_KEY, 0);
-      
-      // Check if enough time has passed since the last notification
-      if (now - lastNotification > CACHE_DISPLAY_THRESHOLD) {
-        await setValue(LAST_UPDATE_NOTIFICATION_KEY, now);
-        // Only respond if we haven't notified recently
-        event.ports[0].postMessage({ 
-          result: 'update-available' 
-        });
-      } else {
-        // Too soon for another notification
-        event.ports[0].postMessage({ 
-          result: 'notification-throttled' 
-        });
-      }
-    } else {
-      // Same version - no update
-      event.ports[0].postMessage({ 
-        result: 'no-update' 
-      });
-    }
-  } else if (event.data && event.data.type === 'CHECK_VERSION') {
-    // New message type to just check if an update is available without notifications
-    const now = Date.now();
-    const lastUpdateCheck = await getValue(LAST_UPDATE_CHECK_KEY, 0);
-    
-    // Check if we recently checked for updates
-    if (now - lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
-      event.ports[0].postMessage({ 
-        result: 'no-update' 
-      });
-      return;
-    }
-    
-    await setValue(LAST_UPDATE_CHECK_KEY, now);
-    
-    // Compare cache version with current version
-    const storedVersion = await getValue('cacheVersion', '');
-    if (storedVersion !== CACHE_VERSION) {
-      event.ports[0].postMessage({ 
-        result: 'update-available' 
-      });
-    } else {
-      event.ports[0].postMessage({ 
-        result: 'no-update' 
-      });
-    }
   }
 });

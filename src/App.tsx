@@ -9,7 +9,6 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
 import { DataMigration } from "./components/DataMigration";
 import { Suspense, lazy, useEffect } from "react";
-import { useToast } from "./hooks/use-toast";
 
 // Lazily load page components
 const Index = lazy(() => import("./pages/Index"));
@@ -49,46 +48,19 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   return children;
 };
 
-// Component to handle service worker registration and updates
+// Component to handle service worker registration
 const ServiceWorkerHandler = () => {
-  const { toast } = useToast();
-  
   useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
         .then(registration => {
           console.info('Service worker registered:', registration);
-          
-          // Check for updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            console.info('New service worker found!');
-            
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  toast({
-                    title: 'Update Available',
-                    description: 'A new version is available. Reload to update.',
-                    action: (
-                      <button 
-                        onClick={() => window.location.reload()} 
-                        className="bg-primary text-white px-2 py-1 rounded text-xs"
-                      >
-                        Reload
-                      </button>
-                    )
-                  });
-                }
-              });
-            }
-          });
         })
         .catch(error => {
           console.error('Service worker registration failed:', error);
         });
     }
-  }, [toast]);
+  }, []);
   
   return null;
 };

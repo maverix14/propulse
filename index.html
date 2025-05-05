@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -6,7 +7,7 @@
     <title>Project Pulse</title>
     <meta name="description" content="A simple project status tracking tool for project owners" />
     <meta name="author" content="Lovable" />
-    <link rel="manifest" href="/manifest.json?v=1.3.0" />
+    <link rel="manifest" href="/manifest.json" />
     <meta name="theme-color" content="#0f172a" />
     <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
 
@@ -26,68 +27,15 @@
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Check if the browser supports service workers
+      // Basic service worker registration without version checking
       if ('serviceWorker' in navigator) {
-        // Keep track of shown update notifications
-        window._lastUpdateNotification = 0;
-        
-        // Register the service worker
         window.addEventListener('load', async () => {
           try {
-            // Try to register the service worker
-            const registration = await navigator.serviceWorker.register('/sw.js?v=1.3.0');
+            const registration = await navigator.serviceWorker.register('/sw.js');
             console.log('Service worker registered:', registration);
-            
-            // Check for updates every 60 minutes
-            setInterval(() => {
-              registration.update()
-                .then(() => console.log('Service worker checked for updates'))
-                .catch(err => console.error('Service worker update check failed:', err));
-            }, 60 * 60 * 1000);
-            
-            // Add listener for new service workers
-            registration.addEventListener('updatefound', () => {
-              // A new service worker is installing
-              const newWorker = registration.installing;
-              console.log('New service worker found!', newWorker);
-              
-              // Wait for the new service worker to install
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New version available - check if we should show notification
-                  const now = Date.now();
-                  if (now - window._lastUpdateNotification > 60000) { // 1 minute
-                    window._lastUpdateNotification = now;
-                    
-                    // Create a message channel to communicate with the service worker
-                    const messageChannel = new MessageChannel();
-                    messageChannel.port1.onmessage = (event) => {
-                      if (event.data && event.data.result === 'update-available') {
-                        console.log('New version available! Asking user to reload...');
-                        // Show confirmation only if it's been more than a minute since last notification
-                        if (confirm('A new version is available. Reload now?')) {
-                          window.location.reload();
-                        }
-                      }
-                    };
-                    
-                    // Ask the service worker if we should show an update
-                    navigator.serviceWorker.controller.postMessage(
-                      { type: 'UPDATE_AVAILABLE' },
-                      [messageChannel.port2]
-                    );
-                  }
-                }
-              });
-            });
           } catch (err) {
             console.error('Service worker registration failed:', err);
           }
-        });
-        
-        // Add listener for controlling service worker changes
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-          console.log('Service worker controller changed');
         });
         
         // Function to clear cache and reload
