@@ -19,19 +19,30 @@ import { cn } from "@/lib/utils";
 
 interface NewProjectDialogProps {
   onProjectCreate: (project: Project) => void;
+  initialProject?: Project; // Add this to handle edit mode
+  onProjectEdit?: (updatedProject: Project) => void; // Add this to handle project updates
+  trigger?: React.ReactNode; // Add this to customize the trigger element
 }
 
-export const NewProjectDialog = ({ onProjectCreate }: NewProjectDialogProps) => {
+export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({ 
+  onProjectCreate, 
+  initialProject, 
+  onProjectEdit,
+  trigger 
+}) => {
   const [open, setOpen] = useState(false);
-  const [selectedIcon, setSelectedIcon] = useState<string | null>("rocket");
+  const [selectedIcon, setSelectedIcon] = useState<string | null>(initialProject?.icon || "rocket");
+  
+  // Determine if we're in edit mode
+  const isEditMode = !!initialProject;
 
   const form = useForm<z.infer<typeof projectSchema>>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      icon: "rocket",
-      tags: [],
+      name: initialProject?.name || "",
+      description: initialProject?.description || "",
+      icon: initialProject?.icon || "rocket",
+      tags: initialProject?.tags || [],
     },
   });
 
@@ -60,19 +71,31 @@ export const NewProjectDialog = ({ onProjectCreate }: NewProjectDialogProps) => 
   ];
 
   const onSubmit = (data: z.infer<typeof projectSchema>) => {
-    // Create a new project with the form data
-    const newProject: Project = {
-      id: uuidv4(),
-      name: data.name,
-      description: data.description || "",
-      icon: selectedIcon || undefined,
-      users: [],
-      created_at: new Date().toISOString(),
-      tags: data.tags,
-    };
-
-    // Call the parent component's callback
-    onProjectCreate(newProject);
+    if (isEditMode && initialProject && onProjectEdit) {
+      // Update existing project
+      const updatedProject: Project = {
+        ...initialProject,
+        name: data.name,
+        description: data.description || "",
+        icon: selectedIcon || undefined,
+        tags: data.tags,
+      };
+      onProjectEdit(updatedProject);
+    } else {
+      // Create a new project with the form data
+      const newProject: Project = {
+        id: uuidv4(),
+        name: data.name,
+        description: data.description || "",
+        icon: selectedIcon || undefined,
+        users: [],
+        created_at: new Date().toISOString(),
+        tags: data.tags,
+      };
+      
+      // Call the parent component's callback
+      onProjectCreate(newProject);
+    }
     
     // Reset the form and close the dialog
     form.reset();
@@ -80,18 +103,33 @@ export const NewProjectDialog = ({ onProjectCreate }: NewProjectDialogProps) => 
     setOpen(false);
   };
 
+  // Custom dialog trigger or default button
+  const dialogTrigger = trigger || (
+    <Button onClick={() => setOpen(true)} className="flex items-center gap-2">
+      <Plus className="h-4 w-4" />
+      New Project
+    </Button>
+  );
+
   return (
     <>
-      <Button onClick={() => setOpen(true)} className="flex items-center gap-2">
-        <Plus className="h-4 w-4" />
-        New Project
-      </Button>
+      {React.isValidElement(dialogTrigger) 
+        ? React.cloneElement(dialogTrigger as React.ReactElement, { 
+            onClick: (e: React.MouseEvent) => {
+              e.stopPropagation();
+              setOpen(true);
+              if (dialogTrigger.props.onClick) dialogTrigger.props.onClick(e);
+            }
+          })
+        : dialogTrigger
+      }
+      
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-[550px] max-h-[90vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle>Create new project</DialogTitle>
+            <DialogTitle>{isEditMode ? 'Edit project' : 'Create new project'}</DialogTitle>
             <DialogDescription>
-              Add a new project to manage your work
+              {isEditMode ? 'Update project details' : 'Add a new project to manage your work'}
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
@@ -159,13 +197,13 @@ export const NewProjectDialog = ({ onProjectCreate }: NewProjectDialogProps) => 
                   variant="outline"
                   onClick={() => {
                     form.reset();
-                    setSelectedIcon("rocket");
+                    setSelectedIcon(initialProject?.icon || "rocket");
                     setOpen(false);
                   }}
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Create Project</Button>
+                <Button type="submit">{isEditMode ? 'Save Changes' : 'Create Project'}</Button>
               </DialogFooter>
             </form>
           </Form>
