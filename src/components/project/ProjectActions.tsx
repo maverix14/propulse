@@ -18,10 +18,10 @@ export const ProjectActions = ({
   return (
     <div className="flex items-center justify-end gap-2">
       <NewProjectDialog 
-        project={project}
         editMode={true}
         onProjectEdit={onUpdate}
         onProjectCreate={() => {}}
+        initialProject={project}
         trigger={
           <Button
             variant="outline"
