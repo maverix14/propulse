@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { PillTextField } from "./PillTextField";
 import { StickyNote } from "lucide-react";
+
 interface UserStatusCardProps {
   user: User;
   currentDate: string;
@@ -20,6 +21,7 @@ interface UserStatusCardProps {
   onNoteChange: (userId: string, note: string) => void;
   onChangeUserLevel: (user: User) => void;
 }
+
 export const UserStatusCard = ({
   user,
   currentDate,
@@ -126,13 +128,13 @@ export const UserStatusCard = ({
       </div>
 
       <div className="mt-3 w-full">
-        <div className="max-w-full overflow-hidden">
+        <div className="w-full overflow-hidden">
           {editingNote ? (
             <Textarea 
               value={noteText} 
               onChange={e => setNoteText(e.target.value)} 
               placeholder="Add notes about this user's status..." 
-              className="min-h-[80px] max-h-[150px] bg-background text-foreground dark:text-white resize-none" 
+              className="min-h-[80px] max-h-[150px] bg-background text-foreground dark:text-white resize-none w-full" 
               autoFocus 
               onBlur={() => {
                 onNoteChange(user.id, noteText);
@@ -145,12 +147,13 @@ export const UserStatusCard = ({
                 setEditingNote(true);
                 setNoteText(user.note || "");
               }} 
-              className="cursor-pointer max-w-full overflow-hidden"
+              className="cursor-pointer w-full overflow-hidden"
             >
               <PillTextField 
                 icon={<StickyNote className="h-4 w-4" />} 
                 text={user.note || "Add status notes"} 
-                maxWidth="max-w-full" 
+                maxWidth="w-full" 
+                className="max-w-full"
               />
             </div>
           )}

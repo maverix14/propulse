@@ -79,7 +79,7 @@ export const IntegrationUsernames = ({ project, onUpdate, readOnly = false }: In
     }
     
     return (
-      <div className="w-full min-w-0 flex-grow-0 flex-shrink basis-auto">
+      <div className="w-full min-w-0 max-w-[200px]">
         <PillTextField 
           icon={icon}
           text={value || placeholder}
@@ -92,9 +92,9 @@ export const IntegrationUsernames = ({ project, onUpdate, readOnly = false }: In
   };
 
   return (
-    <div className="flex flex-wrap gap-2 mt-2">
+    <div className="flex flex-nowrap gap-2 mt-2 overflow-x-auto w-full">
       {hasGithub && (
-        <div className="flex-grow-0 flex-shrink max-w-full">
+        <div className="flex-shrink-0">
           {renderEditableField(
             "githubUser",
             <Github className="h-4 w-4" />,
@@ -105,7 +105,7 @@ export const IntegrationUsernames = ({ project, onUpdate, readOnly = false }: In
       )}
       
       {hasVercel && (
-        <div className="flex-grow-0 flex-shrink max-w-full">
+        <div className="flex-shrink-0">
           {renderEditableField(
             "vercelUser",
             <svg className="h-4 w-4" viewBox="0 0 116 100" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -118,7 +118,7 @@ export const IntegrationUsernames = ({ project, onUpdate, readOnly = false }: In
       )}
       
       {hasSupabase && (
-        <div className="flex-grow-0 flex-shrink max-w-full">
+        <div className="flex-shrink-0">
           {renderEditableField(
             "supabaseUser",
             <svg className="h-4 w-4" viewBox="0 0 109 113" fill="none" xmlns="http://www.w3.org/2000/svg">
