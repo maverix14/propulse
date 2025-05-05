@@ -1,14 +1,15 @@
 
+import React from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
 import { DataMigration } from "./components/DataMigration";
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy } from "react";
 
 // Lazily load page components
 const Index = lazy(() => import("./pages/Index"));
@@ -46,12 +47,12 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   // Allow all users (including guests) to access the route
-  return children;
+  return <>{children}</>;
 };
 
 // Component to handle service worker registration
 const ServiceWorkerHandler = () => {
-  useEffect(() => {
+  React.useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
         .then(registration => {
@@ -69,36 +70,40 @@ const ServiceWorkerHandler = () => {
 // Main App component
 const App = () => {
   return (
-    <ThemeProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <DataMigration />
-            <ServiceWorkerHandler />
-            <Toaster />
-            <Sonner />
+    <React.StrictMode>
+      <ThemeProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
             <BrowserRouter>
-              <Suspense fallback={<LoadingFallback />}>
-                <Routes>
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/settings" element={
-                    <PrivateRoute>
-                      <Settings />
-                    </PrivateRoute>
-                  } />
-                  <Route path="/" element={
-                    <PrivateRoute>
-                      <Index />
-                    </PrivateRoute>
-                  } />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
+              <React.Fragment>
+                <TooltipProvider>
+                  <DataMigration />
+                  <ServiceWorkerHandler />
+                  <Toaster />
+                  <Sonner />
+                  <Suspense fallback={<LoadingFallback />}>
+                    <Routes>
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/settings" element={
+                        <PrivateRoute>
+                          <Settings />
+                        </PrivateRoute>
+                      } />
+                      <Route path="/" element={
+                        <PrivateRoute>
+                          <Index />
+                        </PrivateRoute>
+                      } />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </TooltipProvider>
+              </React.Fragment>
             </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </ThemeProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </ThemeProvider>
+    </React.StrictMode>
   );
 };
 
