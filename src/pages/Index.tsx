@@ -144,9 +144,8 @@ const Index = () => {
           <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-zinc-700 via-zinc-500 to-zinc-600 dark:from-zinc-300 dark:via-zinc-400 dark:to-zinc-500">
             <span className="inline-flex items-center">ProPulsio</span>
           </h1>
-          <p className="text-muted-foreground text-lg max-w-md mx-auto">
-            Track every pulse of your projects
-          </p>
+          <p className="text-muted-foreground text-lg max-w-md mx-auto">Track every pulse of your projects
+- v0.1</p>
           {isGuest ? <Button variant="outline" size="sm" className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => navigate('/auth')}>
               Guest Mode
             </Button> : <Button variant="outline" size="sm" className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
