@@ -30,6 +30,7 @@ export interface Project {
   tags?: string[];
   note?: string;
   users: User[];
+  created_at?: string; // Added this field to match Supabase
   integrations?: {
     github?: string;
     vercel?: string;
