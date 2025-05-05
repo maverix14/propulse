@@ -151,13 +151,15 @@ export const ProjectCard = ({
         {expanded && <CardContent className="space-y-6 pt-4">
             <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-muted/50 to-transparent mb-4 dark:via-muted/20"></div>
             
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col gap-2 grow mx-[20px]">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex flex-col gap-2 grow basis-0 min-w-0 max-w-[calc(100%-80px)]">
                 <ProjectNotes project={project} onUpdate={onUpdate} isExpanded={true} />
                 <IntegrationUsernames project={project} onUpdate={onUpdate} />
               </div>
               
-              <ProjectActions project={project} onUpdate={onUpdate} onOpenDeleteDialog={() => setDeleteDialogOpen(true)} />
+              <div className="flex-shrink-0">
+                <ProjectActions project={project} onUpdate={onUpdate} onOpenDeleteDialog={() => setDeleteDialogOpen(true)} />
+              </div>
             </div>
             
             {project.users.length === 0 ? <div className="text-center py-8 border border-dashed rounded-lg border-muted-foreground/20 bg-background/50 backdrop-blur-sm dark:bg-black/20">

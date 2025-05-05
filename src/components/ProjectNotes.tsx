@@ -37,21 +37,21 @@ export const ProjectNotes = ({ project, onUpdate, isExpanded }: ProjectNotesProp
   if (!isExpanded) return null;
 
   return (
-    <div className="mt-4">
+    <div className="mt-4 w-full">
       {isEditing ? (
         <div className="mt-2">
           <Textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Add notes about this project..."
-            className="min-h-[100px] bg-background text-foreground dark:text-white"
+            className="min-h-[100px] max-h-[200px] bg-background text-foreground dark:text-white"
             onBlur={handleSaveNote}
             autoFocus
           />
         </div>
       ) : (
         <div 
-          className="cursor-pointer"
+          className="cursor-pointer max-w-full"
           onClick={() => setIsEditing(true)}
         >
           <PillTextField 
