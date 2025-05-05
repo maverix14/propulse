@@ -1,4 +1,3 @@
-
 // Define the core types for the application
 // Define the status level type (this was missing)
 export type StatusLevel = 0 | 1 | 2 | 3 | 4 | 5;
@@ -21,11 +20,14 @@ export interface Project {
   id: string;
   name: string;
   description: string;
-  createdAt: string;
-  icon?: string;
+  createdAt?: string;
   users: User[];
-  tags?: string[]; // Add tags property for platform tags
-  note?: string;  // Project notes field
+  note?: string;
+  icon?: string;
+  tags?: string[];
+  githubUser?: string;
+  vercelUser?: string;
+  supabaseUser?: string;
 }
 
 // Helper functions to compute project statistics

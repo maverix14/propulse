@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, StatusLevel, UserLevel, hasReachedDailyLimit, hasReachedMonthlyLimit } from "@/types";
 import { Shield, AlertTriangle } from "lucide-react";
@@ -11,6 +10,8 @@ import { StatusSelector } from "@/components/StatusSelector";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
+import { PillTextField } from "./PillTextField";
+import { StickyNote } from "lucide-react";
 
 interface UserStatusCardProps {
   user: User;
@@ -163,29 +164,33 @@ export const UserStatusCard = ({
       </div>
 
       <div className="mt-3">
-        <div 
-          className="rounded-md border p-3 bg-muted/10 text-sm cursor-pointer hover:bg-muted/20 transition-colors"
-          onClick={() => {
-            setEditingNote(true);
-            setNoteText(user.note || "");
-          }}
-        >
-          {editingNote ? (
-            <Textarea
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              placeholder="Add notes about this user's status..."
-              className="min-h-[80px] bg-background text-foreground dark:text-white"
-              autoFocus
-              onBlur={() => {
-                onNoteChange(user.id, noteText);
-                setEditingNote(false);
-              }}
+        {editingNote ? (
+          <Textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="Add notes about this user's status..."
+            className="min-h-[80px] bg-background text-foreground dark:text-white"
+            autoFocus
+            onBlur={() => {
+              onNoteChange(user.id, noteText);
+              setEditingNote(false);
+            }}
+          />
+        ) : (
+          <div 
+            onClick={() => {
+              setEditingNote(true);
+              setNoteText(user.note || "");
+            }}
+            className="cursor-pointer"
+          >
+            <PillTextField 
+              icon={<StickyNote className="h-4 w-4" />}
+              text={user.note || "Add status notes"}
+              maxWidth="max-w-full"
             />
-          ) : (
-            user.note ? user.note : <span className="text-muted-foreground italic">Click to add status notes</span>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

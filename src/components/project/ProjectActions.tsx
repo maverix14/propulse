@@ -24,24 +24,24 @@ export const ProjectActions = ({
         onProjectCreate={() => {}}
         trigger={
           <Button
-            variant="ghost"
-            size="sm"
-            className="flex items-center gap-1"
+            variant="outline"
+            size="icon"
+            className="h-8 w-8 rounded-full"
           >
-            <Edit className="h-4 w-4" /> Edit
+            <Edit className="h-4 w-4" />
           </Button>
         }
       />
       <Button
-        variant="ghost"
-        size="sm"
-        className="flex items-center gap-1 text-destructive hover:text-destructive"
+        variant="outline"
+        size="icon"
+        className="h-8 w-8 rounded-full text-destructive hover:text-destructive hover:border-destructive"
         onClick={(e) => {
           e.stopPropagation();
           onOpenDeleteDialog();
         }}
       >
-        <Trash className="h-4 w-4" /> Delete
+        <Trash className="h-4 w-4" />
       </Button>
     </div>
   );

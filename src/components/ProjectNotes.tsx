@@ -5,6 +5,7 @@ import { StickyNote } from 'lucide-react';
 import { Project } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { PillTextField } from './project/PillTextField';
 
 interface ProjectNotesProps {
   project: Project;
@@ -37,11 +38,6 @@ export const ProjectNotes = ({ project, onUpdate, isExpanded }: ProjectNotesProp
 
   return (
     <div className="mt-4">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium flex items-center">
-          <StickyNote className="h-4 w-4 mr-1" /> Project Notes
-        </h4>
-      </div>
       {isEditing ? (
         <div className="mt-2">
           <Textarea
@@ -55,10 +51,14 @@ export const ProjectNotes = ({ project, onUpdate, isExpanded }: ProjectNotesProp
         </div>
       ) : (
         <div 
-          className="rounded-md border p-3 bg-muted/10 text-sm mt-2 cursor-pointer hover:bg-muted/20 transition-colors"
+          className="cursor-pointer"
           onClick={() => setIsEditing(true)}
         >
-          {project.note || <span className="text-muted-foreground italic">Click to add notes</span>}
+          <PillTextField 
+            icon={<StickyNote className="h-4 w-4" />}
+            text={project.note || "Add project notes"}
+            maxWidth="max-w-full"
+          />
         </div>
       )}
     </div>

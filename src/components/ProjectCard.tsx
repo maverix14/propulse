@@ -193,13 +193,18 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
           <CardContent className="space-y-6 pt-4">
             <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-muted/50 to-transparent mb-4 dark:via-muted/20"></div>
             
-            <ProjectActions 
-              project={project} 
-              onUpdate={onUpdate} 
-              onOpenDeleteDialog={() => setDeleteDialogOpen(true)} 
-            />
-            
-            <ProjectNotes project={project} onUpdate={onUpdate} isExpanded={true} />
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-2 grow">
+                <ProjectNotes project={project} onUpdate={onUpdate} isExpanded={true} />
+                <IntegrationUsernames project={project} />
+              </div>
+              
+              <ProjectActions 
+                project={project} 
+                onUpdate={onUpdate} 
+                onOpenDeleteDialog={() => setDeleteDialogOpen(true)} 
+              />
+            </div>
             
             {project.users.length === 0 ? (
               <div className="text-center py-8 border border-dashed rounded-lg border-muted-foreground/20 bg-background/50 backdrop-blur-sm dark:bg-black/20">
