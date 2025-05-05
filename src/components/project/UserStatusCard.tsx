@@ -125,14 +125,14 @@ export const UserStatusCard = ({
         </div>
       </div>
 
-      <div className="mt-3">
-        {editingNote ? <Textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Add notes about this user's status..." className="min-h-[80px] bg-background text-foreground dark:text-white" autoFocus onBlur={() => {
+      <div className="mt-3 w-full">
+        {editingNote ? <Textarea value={noteText} onChange={e => setNoteText(e.target.value)} placeholder="Add notes about this user's status..." className="min-h-[80px] max-h-[150px] bg-background text-foreground dark:text-white overflow-auto resize-none" autoFocus onBlur={() => {
         onNoteChange(user.id, noteText);
         setEditingNote(false);
       }} /> : <div onClick={() => {
         setEditingNote(true);
         setNoteText(user.note || "");
-      }} className="cursor-pointer">
+      }} className="cursor-pointer max-w-full">
             <PillTextField icon={<StickyNote className="h-4 w-4" />} text={user.note || "Add status notes"} maxWidth="max-w-full" />
           </div>}
       </div>
