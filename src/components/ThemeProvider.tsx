@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "dark" | "light";
 
@@ -34,10 +34,10 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
     
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
-      document.body.classList.remove("light");
+      document.documentElement.classList.remove("light");
     } else {
       document.documentElement.classList.remove("dark");
-      document.body.classList.add("light");
+      document.documentElement.classList.add("light");
     }
     
     localStorage.setItem("project-pulse-theme", theme);
