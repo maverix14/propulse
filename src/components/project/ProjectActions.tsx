@@ -10,18 +10,17 @@ interface ProjectActionsProps {
   onOpenDeleteDialog: () => void;
 }
 
-export const ProjectActions = ({ 
+export const ProjectActions: React.FC<ProjectActionsProps> = ({ 
   project, 
   onUpdate, 
   onOpenDeleteDialog 
-}: ProjectActionsProps) => {
+}) => {
   return (
     <div className="flex items-center justify-end gap-2">
       <NewProjectDialog 
-        editMode={true}
-        onProjectEdit={onUpdate}
         onProjectCreate={() => {}}
         initialProject={project}
+        onProjectEdit={onUpdate}
         trigger={
           <Button
             variant="outline"
