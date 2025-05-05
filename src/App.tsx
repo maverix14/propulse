@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -67,7 +66,7 @@ const ServiceWorkerHandler = () => {
 
 const AppContent = () => {
   return (
-    <>
+    <TooltipProvider>
       <DataMigration />
       <ServiceWorkerHandler />
       <Toaster />
@@ -90,7 +89,7 @@ const AppContent = () => {
           </Routes>
         </Suspense>
       </BrowserRouter>
-    </>
+    </TooltipProvider>
   );
 };
 
@@ -98,9 +97,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <AuthProvider>
-        <TooltipProvider>
-          <AppContent />
-        </TooltipProvider>
+        <AppContent />
       </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
