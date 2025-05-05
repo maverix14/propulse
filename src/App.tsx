@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -64,41 +65,49 @@ const ServiceWorkerHandler = () => {
   return null;
 };
 
+const AppRoutes = () => {
+  return (
+    <BrowserRouter>
+      <Suspense fallback={<LoadingFallback />}>
+        <Routes>
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/settings" element={
+            <PrivateRoute>
+              <Settings />
+            </PrivateRoute>
+          } />
+          <Route path="/" element={
+            <PrivateRoute>
+              <Index />
+            </PrivateRoute>
+          } />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </BrowserRouter>
+  );
+};
+
 const AppContent = () => {
   return (
-    <TooltipProvider>
-      <DataMigration />
+    <>
       <ServiceWorkerHandler />
+      <DataMigration />
+      <AppRoutes />
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/settings" element={
-              <PrivateRoute>
-                <Settings />
-              </PrivateRoute>
-            } />
-            <Route path="/" element={
-              <PrivateRoute>
-                <Index />
-              </PrivateRoute>
-            } />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
+    </>
   );
 };
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <TooltipProvider>
+        <AuthProvider>
+          <AppContent />
+          <Sonner />
+        </AuthProvider>
+      </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );
