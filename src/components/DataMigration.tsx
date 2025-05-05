@@ -1,11 +1,10 @@
-
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { loadProjects } from '@/utils/storageUtils';
 import { useToast } from '@/hooks/use-toast';
 
-export const DataMigration: React.FC = () => {
+export const DataMigration = () => {
   const { user, isGuest } = useAuth();
   const { toast } = useToast();
 
@@ -27,7 +26,7 @@ export const DataMigration: React.FC = () => {
               name: project.name,
               description: project.description,
               created_by: user.id,
-              created_at: project.created_at, // Changed from createdAt to created_at
+              created_at: project.createdAt,
             });
 
           if (error) {

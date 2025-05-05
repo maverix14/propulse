@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { Card, CardContent } from "./ui/card";
-import { Project, StatusLevel, User as UserType, UserLevel } from "@/types";
+import { Project, StatusLevel, User as UserType, UserLevel, getProjectStats, hasReachedDailyLimit, hasReachedMonthlyLimit } from "@/types";
 import { getCurrentDate, getCurrentMonth } from "@/utils/dateUtils";
 import { syncUserAcrossProjects } from "@/utils/storageUtils";
 import { useToast } from "@/hooks/use-toast";
@@ -19,11 +19,11 @@ import {
   ProjectHeader, 
   ProjectActions,
   UserStatusCard,
-  UserLevelDialog,
-  IntegrationPill
+  UserLevelDialog
 } from "./project";
 import { Users } from "lucide-react";
 import { ProjectNotes } from "./ProjectNotes";
+import { Badge } from "./ui/badge";
 
 interface ProjectCardProps {
   project: Project;
@@ -193,21 +193,13 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
           <CardContent className="space-y-6 pt-4">
             <div className="w-full h-0.5 bg-gradient-to-r from-transparent via-muted/50 to-transparent mb-4 dark:via-muted/20"></div>
             
-            <div className="flex items-center justify-between">
-              <div className="grid gap-2 w-full max-w-lg">
-                <ProjectNotes project={project} onUpdate={onUpdate} isExpanded={true} />
-                
-                <IntegrationPill project={project} integrationType="github" onUpdate={onUpdate} />
-                <IntegrationPill project={project} integrationType="vercel" onUpdate={onUpdate} />
-                <IntegrationPill project={project} integrationType="supabase" onUpdate={onUpdate} />
-              </div>
-              
-              <ProjectActions 
-                project={project} 
-                onUpdate={onUpdate} 
-                onOpenDeleteDialog={() => setDeleteDialogOpen(true)} 
-              />
-            </div>
+            <ProjectActions 
+              project={project} 
+              onUpdate={onUpdate} 
+              onOpenDeleteDialog={() => setDeleteDialogOpen(true)} 
+            />
+            
+            <ProjectNotes project={project} onUpdate={onUpdate} isExpanded={true} />
             
             {project.users.length === 0 ? (
               <div className="text-center py-8 border border-dashed rounded-lg border-muted-foreground/20 bg-background/50 backdrop-blur-sm dark:bg-black/20">
@@ -263,18 +255,4 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
       />
     </>
   );
-};
-
-// Helper function to get project statistics
-const getProjectStats = (project: Project, currentDate: string) => {
-  const userCount = project.users.length;
-  
-  const dailyStatusSum = project.users.reduce((sum, user) => {
-    const dailyStatus = user.dailyStatus?.[currentDate] || 0;
-    return sum + dailyStatus;
-  }, 0);
-  
-  const averageStatus = userCount > 0 ? dailyStatusSum / userCount : 0;
-  
-  return { userCount, dailyStatusSum, averageStatus };
 };

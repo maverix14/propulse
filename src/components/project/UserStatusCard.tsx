@@ -1,7 +1,7 @@
 
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { User, StatusLevel, UserLevel, hasReachedDailyLimit, hasReachedMonthlyLimit } from "@/types";
-import { Shield, AlertTriangle, StickyNote } from "lucide-react";
+import { Shield, AlertTriangle } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,6 @@ import { StatusSelector } from "@/components/StatusSelector";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 
 interface UserStatusCardProps {
   user: User;
@@ -50,11 +49,6 @@ export const UserStatusCard = ({
   
   const getDailyLimit = (user: User) => {
     return user.level === UserLevel.Level1 ? 5 : null;
-  };
-
-  const handleSaveNote = () => {
-    onNoteChange(user.id, noteText);
-    setEditingNote(false);
   };
   
   const dailyStatus = getUserStatus(user, currentDate);
@@ -169,56 +163,29 @@ export const UserStatusCard = ({
       </div>
 
       <div className="mt-3">
-        {editingNote ? (
-          <div className="flex flex-col gap-2">
+        <div 
+          className="rounded-md border p-3 bg-muted/10 text-sm cursor-pointer hover:bg-muted/20 transition-colors"
+          onClick={() => {
+            setEditingNote(true);
+            setNoteText(user.note || "");
+          }}
+        >
+          {editingNote ? (
             <Textarea
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
               placeholder="Add notes about this user's status..."
               className="min-h-[80px] bg-background text-foreground dark:text-white"
               autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && e.ctrlKey) {
-                  handleSaveNote();
-                }
+              onBlur={() => {
+                onNoteChange(user.id, noteText);
+                setEditingNote(false);
               }}
             />
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => {
-                  setNoteText(user.note || '');
-                  setEditingNote(false);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                size="sm"
-                onClick={handleSaveNote}
-              >
-                Save Note
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <Button
-            variant="outline"
-            className="h-8 px-3 rounded-full gap-2 w-full justify-start hover:bg-muted/20"
-            onClick={() => {
-              setEditingNote(true);
-              setNoteText(user.note || "");
-            }}
-          >
-            <div className="flex-shrink-0 h-6 w-6 rounded-full bg-background flex items-center justify-center border">
-              <StickyNote className="h-3.5 w-3.5" />
-            </div>
-            <span className="text-sm truncate">
-              {user.note ? user.note : "Add status notes"}
-            </span>
-          </Button>
-        )}
+          ) : (
+            user.note ? user.note : <span className="text-muted-foreground italic">Click to add status notes</span>
+          )}
+        </div>
       </div>
     </div>
   );

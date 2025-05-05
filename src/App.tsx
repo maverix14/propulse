@@ -45,7 +45,7 @@ const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
   }
   
   // Allow all users (including guests) to access the route
-  return <>{children}</>;
+  return children;
 };
 
 // Component to handle service worker registration
@@ -65,49 +65,35 @@ const ServiceWorkerHandler = () => {
   return null;
 };
 
-const AppRoutes = () => {
-  return (
-    <BrowserRouter>
-      <Suspense fallback={<LoadingFallback />}>
-        <Routes>
-          <Route path="/auth" element={<Auth />} />
-          <Route path="/settings" element={
-            <PrivateRoute>
-              <Settings />
-            </PrivateRoute>
-          } />
-          <Route path="/" element={
-            <PrivateRoute>
-              <Index />
-            </PrivateRoute>
-          } />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </Suspense>
-    </BrowserRouter>
-  );
-};
-
-const AppContent = () => {
-  return (
-    <>
-      <ServiceWorkerHandler />
-      <DataMigration />
-      <AppRoutes />
-      <Toaster />
-    </>
-  );
-};
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <TooltipProvider>
-        <AuthProvider>
-          <AppContent />
+      <AuthProvider>
+        <TooltipProvider>
+          <DataMigration />
+          <ServiceWorkerHandler />
+          <Toaster />
           <Sonner />
-        </AuthProvider>
-      </TooltipProvider>
+          <BrowserRouter>
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/settings" element={
+                  <PrivateRoute>
+                    <Settings />
+                  </PrivateRoute>
+                } />
+                <Route path="/" element={
+                  <PrivateRoute>
+                    <Index />
+                  </PrivateRoute>
+                } />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

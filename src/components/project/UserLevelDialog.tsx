@@ -15,7 +15,7 @@ import { User, UserLevel } from "@/types";
 import { useEffect, useState } from "react";
 
 interface UserLevelSetting {
-  id: UserLevel; // Changed from number to UserLevel
+  id: number;
   name: string;
   dailyLimit: number | null;
   monthlyLimit: number;
@@ -45,13 +45,13 @@ export const UserLevelDialog = ({
       // Default levels if not found
       setUserLevels([
         {
-          id: UserLevel.Level1,
+          id: 1,
           name: "Level 1",
           dailyLimit: 5,
           monthlyLimit: 30
         },
         {
-          id: UserLevel.Level2,
+          id: 2,
           name: "Level 2",
           dailyLimit: null,
           monthlyLimit: 100
@@ -71,11 +71,11 @@ export const UserLevelDialog = ({
             <p className="mb-2">Select a level for {selectedUser.username}:</p>
             <div className="grid gap-4 mt-4">
               {userLevels.map(level => (
-                <div key={String(level.id)} className="flex items-center space-x-2">
+                <div key={level.id} className="flex items-center space-x-2">
                   <Button
                     variant={selectedUser.level === level.id ? "default" : "outline"}
                     className="w-full justify-start"
-                    onClick={() => onUpdateUserLevel(level.id)}
+                    onClick={() => onUpdateUserLevel(level.id as UserLevel)}
                   >
                     <Shield className="mr-2 h-4 w-4" />
                     {level.name}

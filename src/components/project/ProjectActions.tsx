@@ -10,37 +10,38 @@ interface ProjectActionsProps {
   onOpenDeleteDialog: () => void;
 }
 
-export const ProjectActions: React.FC<ProjectActionsProps> = ({ 
+export const ProjectActions = ({ 
   project, 
   onUpdate, 
   onOpenDeleteDialog 
-}) => {
+}: ProjectActionsProps) => {
   return (
     <div className="flex items-center justify-end gap-2">
       <NewProjectDialog 
-        onProjectCreate={() => {}}
-        initialProject={project}
+        project={project}
+        editMode={true}
         onProjectEdit={onUpdate}
+        onProjectCreate={() => {}}
         trigger={
           <Button
-            variant="outline"
-            size="icon"
-            className="rounded-full h-9 w-9"
+            variant="ghost"
+            size="sm"
+            className="flex items-center gap-1"
           >
-            <Edit className="h-4 w-4" />
+            <Edit className="h-4 w-4" /> Edit
           </Button>
         }
       />
       <Button
-        variant="outline"
-        size="icon"
-        className="rounded-full h-9 w-9 text-destructive hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+        variant="ghost"
+        size="sm"
+        className="flex items-center gap-1 text-destructive hover:text-destructive"
         onClick={(e) => {
           e.stopPropagation();
           onOpenDeleteDialog();
         }}
       >
-        <Trash className="h-4 w-4" />
+        <Trash className="h-4 w-4" /> Delete
       </Button>
     </div>
   );
