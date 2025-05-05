@@ -191,8 +191,8 @@ const Settings = () => {
   };
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 dark:from-background dark:to-background/90 transition-colors duration-1000">
       <div className="container py-8 max-w-4xl mx-auto px-4">
-        <div className="mb-8 flex items-center">
-          <Button variant="ghost" onClick={() => navigate('/')} className="mr-4">
+        <div className="mb-8 flex justify-center items-center">
+          <Button variant="ghost" onClick={() => navigate('/')} className="absolute left-4">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>

@@ -12,6 +12,26 @@ export const StatusIndicator = ({
   size = "md", 
   showGlow = true 
 }: StatusIndicatorProps) => {
+  // Handle 0 status differently
+  if (value === 0) {
+    return (
+      <div className="relative">
+        <div 
+          className={cn(
+            "rounded-md flex items-center justify-center font-mono font-bold text-gray-400 shadow-md transition-all duration-300 hover:scale-105 border border-gray-200 dark:border-gray-700",
+            {
+              "w-6 h-6 text-xs": size === "sm",
+              "w-8 h-8 text-sm": size === "md",
+              "w-10 h-10 text-base": size === "lg"
+            }
+          )}
+        >
+          0
+        </div>
+      </div>
+    );
+  }
+  
   const statusValue = Math.max(1, Math.min(5, Math.round(value))) as 1 | 2 | 3 | 4 | 5;
   
   const sizeClasses = {

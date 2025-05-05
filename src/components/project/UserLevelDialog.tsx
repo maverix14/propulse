@@ -12,6 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Shield } from "lucide-react";
 import { User, UserLevel } from "@/types";
+import { useEffect, useState } from "react";
+
+interface UserLevelSetting {
+  id: number;
+  name: string;
+  dailyLimit: number | null;
+  monthlyLimit: number;
+}
 
 interface UserLevelDialogProps {
   open: boolean;
@@ -26,6 +34,32 @@ export const UserLevelDialog = ({
   selectedUser,
   onUpdateUserLevel
 }: UserLevelDialogProps) => {
+  const [userLevels, setUserLevels] = useState<UserLevelSetting[]>([]);
+  
+  useEffect(() => {
+    // Get user levels from localStorage
+    const storedLevels = localStorage.getItem('userLevelSettings');
+    if (storedLevels) {
+      setUserLevels(JSON.parse(storedLevels));
+    } else {
+      // Default levels if not found
+      setUserLevels([
+        {
+          id: 1,
+          name: "Level 1",
+          dailyLimit: 5,
+          monthlyLimit: 30
+        },
+        {
+          id: 2,
+          name: "Level 2",
+          dailyLimit: null,
+          monthlyLimit: 100
+        }
+      ]);
+    }
+  }, [open]);
+  
   if (!selectedUser) return null;
   
   return (
@@ -36,32 +70,22 @@ export const UserLevelDialog = ({
           <AlertDialogDescription>
             <p className="mb-2">Select a level for {selectedUser.username}:</p>
             <div className="grid gap-4 mt-4">
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant={selectedUser.level === UserLevel.Level1 ? "default" : "outline"}
-                  className="w-full justify-start"
-                  onClick={() => onUpdateUserLevel(UserLevel.Level1)}
-                >
-                  <Shield className="mr-2 h-4 w-4" />
-                  Level 1
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    30 points/month, 5 points/day
-                  </span>
-                </Button>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant={selectedUser.level === UserLevel.Level2 ? "default" : "outline"}
-                  className="w-full justify-start"
-                  onClick={() => onUpdateUserLevel(UserLevel.Level2)}
-                >
-                  <Shield className="mr-2 h-4 w-4" />
-                  Level 2
-                  <span className="ml-auto text-xs text-muted-foreground">
-                    100 points/month, no daily limit
-                  </span>
-                </Button>
-              </div>
+              {userLevels.map(level => (
+                <div key={level.id} className="flex items-center space-x-2">
+                  <Button
+                    variant={selectedUser.level === level.id ? "default" : "outline"}
+                    className="w-full justify-start"
+                    onClick={() => onUpdateUserLevel(level.id as UserLevel)}
+                  >
+                    <Shield className="mr-2 h-4 w-4" />
+                    {level.name}
+                    <span className="ml-auto text-xs text-muted-foreground">
+                      {level.monthlyLimit} points/month, 
+                      {level.dailyLimit ? ` ${level.dailyLimit} points/day` : ' no daily limit'}
+                    </span>
+                  </Button>
+                </div>
+              ))}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>

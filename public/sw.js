@@ -1,26 +1,105 @@
 // Cache version - change this when deploying new app versions to invalidate old cache
-const CACHE_VERSION = 'project-pulse-v5';
-const CACHE_DISPLAY_THRESHOLD = 60 * 60 * 1000; // 1 hour between update notifications (increased from 1 minute)
-const UPDATE_CHECK_INTERVAL = 4 * 60 * 60 * 1000; // 4 hours between update checks (increased from 30 minutes)
+const CACHE_VERSION = 'project-pulse-v6'; // Incremented version
+const CACHE_DISPLAY_THRESHOLD = 60 * 60 * 1000; // 1 hour between update notifications
+const UPDATE_CHECK_INTERVAL = 12 * 60 * 60 * 1000; // Increased to 12 hours between update checks
 
-// Keep track of when we last showed an update notification
-let _lastUpdateNotification = Date.now() - (2 * CACHE_DISPLAY_THRESHOLD); // Ensure we can show one notification on first load
-// Keep track of when we last checked for updates
-let _lastUpdateCheck = Date.now() - (2 * UPDATE_CHECK_INTERVAL); // Ensure we can check for updates on first load
+// Keep track of when we last showed an update notification - store in indexedDB instead of memory
+const DB_NAME = 'service-worker-state';
+const STORE_NAME = 'timestamps';
+const LAST_UPDATE_NOTIFICATION_KEY = 'lastUpdateNotification';
+const LAST_UPDATE_CHECK_KEY = 'lastUpdateCheck';
+
+// Open the database
+const openDatabase = () => {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1);
+    
+    request.onerror = (event) => {
+      reject('Error opening database');
+    };
+    
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME);
+      }
+    };
+    
+    request.onsuccess = (event) => {
+      resolve(event.target.result);
+    };
+  });
+};
+
+// Get a value from the database
+const getValue = async (key, defaultValue) => {
+  try {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readonly');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.get(key);
+      
+      request.onerror = (event) => {
+        resolve(defaultValue);
+      };
+      
+      request.onsuccess = (event) => {
+        resolve(request.result || defaultValue);
+      };
+    });
+  } catch (error) {
+    return defaultValue;
+  }
+};
+
+// Set a value in the database
+const setValue = async (key, value) => {
+  try {
+    const db = await openDatabase();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const request = store.put(value, key);
+      
+      request.onerror = (event) => {
+        reject('Error storing value');
+      };
+      
+      request.onsuccess = (event) => {
+        resolve();
+      };
+    });
+  } catch (error) {
+    console.error('Error setting value:', error);
+  }
+};
+
+// Initialize the cache version in storage
+const initCache = async () => {
+  try {
+    await setValue('cacheVersion', CACHE_VERSION);
+  } catch (error) {
+    console.error('Failed to initialize cache version:', error);
+  }
+};
 
 self.addEventListener('install', (event) => {
   console.log('Service Worker installing with cache version:', CACHE_VERSION);
   event.waitUntil(
-    caches.open(CACHE_VERSION).then((cache) => {
-      return cache.addAll([
-        '/',
-        '/index.html',
-        '/manifest.json',
-        '/favicon.ico',
-        '/icons/icon-192x192.png',
-        '/icons/icon-512x512.png'
-      ]);
-    })
+    Promise.all([
+      caches.open(CACHE_VERSION).then((cache) => {
+        return cache.addAll([
+          '/',
+          '/index.html',
+          '/manifest.json',
+          '/favicon.ico',
+          '/icons/icon-192x192.png',
+          '/icons/icon-512x512.png'
+        ]);
+      }),
+      initCache()
+    ])
   );
   // Force the waiting service worker to become the active service worker
   self.skipWaiting();
@@ -99,6 +178,7 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log('Service Worker: claiming clients');
+      setValue('cacheVersion', CACHE_VERSION);
       // Take control of all clients immediately
       return self.clients.claim();
     })
@@ -106,7 +186,7 @@ self.addEventListener('activate', (event) => {
 });
 
 // Handle messages from the client
-self.addEventListener('message', (event) => {
+self.addEventListener('message', async (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   } else if (event.data && event.data.type === 'CLEAR_CACHE') {
@@ -118,8 +198,13 @@ self.addEventListener('message', (event) => {
             return caches.delete(cacheName);
           })
         );
-      }).then(() => {
+      }).then(async () => {
         console.log('All caches cleared');
+        // Reset stored timestamps
+        await setValue(LAST_UPDATE_NOTIFICATION_KEY, 0);
+        await setValue(LAST_UPDATE_CHECK_KEY, 0);
+        await setValue('cacheVersion', CACHE_VERSION);
+        
         event.ports[0].postMessage({ 
           result: 'Cache cleared successfully' 
         });
@@ -134,46 +219,70 @@ self.addEventListener('message', (event) => {
     // Check if enough time has passed since last notification
     const now = Date.now();
     
+    // Get timestamps from IndexedDB
+    const lastUpdateCheck = await getValue(LAST_UPDATE_CHECK_KEY, 0);
+    
     // Check if we recently checked for updates
-    if (now - _lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
+    if (now - lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
       event.ports[0].postMessage({ 
         result: 'check-throttled' 
       });
       return;
     }
     
-    _lastUpdateCheck = now;
+    // Update last check timestamp
+    await setValue(LAST_UPDATE_CHECK_KEY, now);
     
-    // Check if enough time has passed since the last notification
-    if (now - _lastUpdateNotification > CACHE_DISPLAY_THRESHOLD) {
-      _lastUpdateNotification = now;
-      // Only respond if we haven't notified recently
-      event.ports[0].postMessage({ 
-        result: 'update-available' 
-      });
+    // Compare cache version with current version
+    const storedVersion = await getValue('cacheVersion', '');
+    if (storedVersion !== CACHE_VERSION) {
+      // Version mismatch - update available
+      const lastNotification = await getValue(LAST_UPDATE_NOTIFICATION_KEY, 0);
+      
+      // Check if enough time has passed since the last notification
+      if (now - lastNotification > CACHE_DISPLAY_THRESHOLD) {
+        await setValue(LAST_UPDATE_NOTIFICATION_KEY, now);
+        // Only respond if we haven't notified recently
+        event.ports[0].postMessage({ 
+          result: 'update-available' 
+        });
+      } else {
+        // Too soon for another notification
+        event.ports[0].postMessage({ 
+          result: 'notification-throttled' 
+        });
+      }
     } else {
-      // Too soon for another notification
+      // Same version - no update
       event.ports[0].postMessage({ 
-        result: 'notification-throttled' 
+        result: 'no-update' 
       });
     }
   } else if (event.data && event.data.type === 'CHECK_VERSION') {
     // New message type to just check if an update is available without notifications
     const now = Date.now();
+    const lastUpdateCheck = await getValue(LAST_UPDATE_CHECK_KEY, 0);
     
     // Check if we recently checked for updates
-    if (now - _lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
+    if (now - lastUpdateCheck < UPDATE_CHECK_INTERVAL) {
       event.ports[0].postMessage({ 
         result: 'no-update' 
       });
       return;
     }
     
-    _lastUpdateCheck = now;
+    await setValue(LAST_UPDATE_CHECK_KEY, now);
     
-    // Check for real updates - for now, just report no update to avoid false notifications
-    event.ports[0].postMessage({ 
-      result: 'no-update' 
-    });
+    // Compare cache version with current version
+    const storedVersion = await getValue('cacheVersion', '');
+    if (storedVersion !== CACHE_VERSION) {
+      event.ports[0].postMessage({ 
+        result: 'update-available' 
+      });
+    } else {
+      event.ports[0].postMessage({ 
+        result: 'no-update' 
+      });
+    }
   }
 });

@@ -99,23 +99,39 @@ export const ProjectCard = ({ project, onUpdate, onDelete }: ProjectCardProps) =
     const userToUpdate = project.users.find(user => user.id === userId);
     if (!userToUpdate) return;
     
-    // Level 1 users have daily limits, Level 2 users don't
-    if (userToUpdate.level === UserLevel.Level1 && 
+    // Get user level settings from localStorage
+    const userLevelSettings = JSON.parse(localStorage.getItem('userLevelSettings') || '[]');
+    const userLevelSetting = userLevelSettings.find(
+      (setting: any) => setting.id === userToUpdate.level
+    );
+    
+    // Use default limits if settings not found
+    const dailyLimit = userLevelSetting?.dailyLimit ?? 
+      (userToUpdate.level === UserLevel.Level1 ? 5 : null);
+    const monthlyLimit = userLevelSetting?.monthlyLimit ?? 
+      (userToUpdate.level === UserLevel.Level1 ? 30 : 100);
+    
+    // Check daily limit if applicable
+    if (dailyLimit !== null && 
         value > (userToUpdate.dailyStatus?.[currentDate] || 0) && 
-        hasReachedDailyLimit(userToUpdate, currentDate)) {
+        (userToUpdate.dailyStatus?.[currentDate] || 0) >= dailyLimit) {
       toast({
         title: "Daily limit reached",
-        description: "Maximum 5 points per day allowed for Level 1 users",
+        description: `Maximum ${dailyLimit} points per day allowed for this user level`,
         variant: "destructive",
       });
       return;
     }
     
-    if (hasReachedMonthlyLimit(userToUpdate, currentMonth) && 
-        value > (userToUpdate.dailyStatus?.[currentDate] || 0)) {
+    // Check monthly limit
+    const currentMonthlyTotal = userToUpdate.monthlyStatus?.[currentMonth] || 0;
+    const currentDailyValue = userToUpdate.dailyStatus?.[currentDate] || 0;
+    const pointDifference = value - currentDailyValue;
+    
+    if (pointDifference > 0 && currentMonthlyTotal + pointDifference > monthlyLimit) {
       toast({
         title: "Monthly limit reached",
-        description: `Level ${userToUpdate.level} users can only add up to ${userToUpdate.level === UserLevel.Level1 ? 30 : 100} points per month.`,
+        description: `This user can only add up to ${monthlyLimit} points per month.`,
         variant: "destructive",
       });
       return;
