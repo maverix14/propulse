@@ -19,7 +19,8 @@ import {
   ProjectHeader, 
   ProjectActions,
   UserStatusCard,
-  UserLevelDialog
+  UserLevelDialog,
+  IntegrationUsernames
 } from "./project";
 import { Users } from "lucide-react";
 import { ProjectNotes } from "./ProjectNotes";
