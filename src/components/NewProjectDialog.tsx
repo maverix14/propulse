@@ -1,4 +1,5 @@
 
+import * as React from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -111,14 +112,21 @@ export const NewProjectDialog: React.FC<NewProjectDialogProps> = ({
     </Button>
   );
 
+  // Type guard to check if dialogTrigger is a valid React element with onClick prop
+  const isReactElementWithOnClick = (element: unknown): element is React.ReactElement & { props: { onClick?: React.MouseEventHandler } } => {
+    return React.isValidElement(element);
+  };
+
   return (
     <>
-      {React.isValidElement(dialogTrigger) 
-        ? React.cloneElement(dialogTrigger as React.ReactElement, { 
+      {isReactElementWithOnClick(dialogTrigger) 
+        ? React.cloneElement(dialogTrigger, { 
             onClick: (e: React.MouseEvent) => {
               e.stopPropagation();
               setOpen(true);
-              if (dialogTrigger.props.onClick) dialogTrigger.props.onClick(e);
+              if (dialogTrigger.props.onClick) {
+                dialogTrigger.props.onClick(e);
+              }
             }
           })
         : dialogTrigger
