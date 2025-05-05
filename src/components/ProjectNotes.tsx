@@ -1,9 +1,10 @@
 
 import { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { StickyNote } from 'lucide-react';
 import { Project } from '@/types';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 interface ProjectNotesProps {
@@ -33,33 +34,56 @@ export const ProjectNotes = ({ project, onUpdate, isExpanded }: ProjectNotesProp
     setIsEditing(false);
   };
 
-  if (!isExpanded) return null;
+  if (!isExpanded && !isEditing) return null;
 
   return (
-    <div className="mt-4">
-      <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium flex items-center">
-          <StickyNote className="h-4 w-4 mr-1" /> Project Notes
-        </h4>
-      </div>
+    <div className="w-full">
       {isEditing ? (
-        <div className="mt-2">
+        <div className="flex flex-col gap-2 w-full">
           <Textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Add notes about this project..."
-            className="min-h-[100px] bg-background text-foreground dark:text-white"
-            onBlur={handleSaveNote}
+            className="min-h-[100px] bg-background"
             autoFocus
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && e.ctrlKey) {
+                handleSaveNote();
+              }
+            }}
           />
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                setNoteText(project.note || '');
+                setIsEditing(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              size="sm"
+              onClick={handleSaveNote}
+            >
+              Save Note
+            </Button>
+          </div>
         </div>
       ) : (
-        <div 
-          className="rounded-md border p-3 bg-muted/10 text-sm mt-2 cursor-pointer hover:bg-muted/20 transition-colors"
+        <Button
+          variant="outline"
+          className="h-8 px-3 rounded-full gap-2 w-full justify-start hover:bg-muted/20"
           onClick={() => setIsEditing(true)}
         >
-          {project.note || <span className="text-muted-foreground italic">Click to add notes</span>}
-        </div>
+          <div className="flex-shrink-0 h-6 w-6 rounded-full bg-background flex items-center justify-center border">
+            <StickyNote className="h-3.5 w-3.5" />
+          </div>
+          <span className="text-sm truncate">
+            {project.note ? project.note : "Add project notes"}
+          </span>
+        </Button>
       )}
     </div>
   );
