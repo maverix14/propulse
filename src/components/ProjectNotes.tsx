@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { StickyNote } from 'lucide-react';
@@ -13,7 +13,7 @@ interface ProjectNotesProps {
   isExpanded: boolean;
 }
 
-export const ProjectNotes = ({ project, onUpdate, isExpanded }: ProjectNotesProps) => {
+export const ProjectNotes: React.FC<ProjectNotesProps> = ({ project, onUpdate, isExpanded }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [noteText, setNoteText] = useState(project.note || '');
   const { toast } = useToast();

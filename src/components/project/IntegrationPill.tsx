@@ -12,7 +12,7 @@ interface IntegrationPillProps {
   onUpdate: (updatedProject: Project) => void;
 }
 
-export const IntegrationPill = ({ project, integrationType, onUpdate }: IntegrationPillProps) => {
+export const IntegrationPill: React.FC<IntegrationPillProps> = ({ project, integrationType, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [value, setValue] = useState(project.integrations?.[integrationType] || "");
   const { toast } = useToast();

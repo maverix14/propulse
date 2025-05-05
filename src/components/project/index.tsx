@@ -1,7 +1,9 @@
 
 // Export all project components for easy importing
-export { ProjectHeader } from './ProjectHeader';
-export { ProjectActions } from './ProjectActions';
-export { UserStatusCard } from './UserStatusCard';
-export { UserLevelDialog } from './UserLevelDialog';
-export { IntegrationPill } from './IntegrationPill';
+import { ProjectHeader } from './ProjectHeader';
+import { ProjectActions } from './ProjectActions';
+import { UserStatusCard } from './UserStatusCard';
+import { UserLevelDialog } from './UserLevelDialog';
+import { IntegrationPill } from './IntegrationPill';
+
+export { ProjectHeader, ProjectActions, UserStatusCard, UserLevelDialog, IntegrationPill };
