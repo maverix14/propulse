@@ -8,7 +8,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { ProjectHeader, ProjectActions, UserStatusCard, UserLevelDialog, IntegrationUsernames } from "./project";
 import { Users } from "lucide-react";
 import { ProjectNotes } from "./ProjectNotes";
-import { Badge } from "./ui/badge";
+
 interface ProjectCardProps {
   project: Project;
   onUpdate: (updatedProject: Project) => void;
@@ -154,7 +154,7 @@ export const ProjectCard = ({
             <div className="flex items-center justify-between">
               <div className="flex flex-col gap-2 grow mx-[20px]">
                 <ProjectNotes project={project} onUpdate={onUpdate} isExpanded={true} />
-                <IntegrationUsernames project={project} />
+                <IntegrationUsernames project={project} onUpdate={onUpdate} />
               </div>
               
               <ProjectActions project={project} onUpdate={onUpdate} onOpenDeleteDialog={() => setDeleteDialogOpen(true)} />
