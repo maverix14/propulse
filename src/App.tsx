@@ -8,6 +8,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { AuthProvider } from "./contexts/AuthContext";
 import { useAuth } from "./contexts/AuthContext";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 import { DataMigration } from "./components/DataMigration";
 import { Suspense, lazy } from "react";
 
@@ -75,28 +76,30 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <BrowserRouter>
-              <TooltipProvider>
-                <DataMigration />
-                <ServiceWorkerHandler />
-                <Toaster />
-                <Sonner />
-                <Suspense fallback={<LoadingFallback />}>
-                  <Routes>
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/settings" element={
-                      <PrivateRoute>
-                        <Settings />
-                      </PrivateRoute>
-                    } />
-                    <Route path="/" element={
-                      <PrivateRoute>
-                        <Index />
-                      </PrivateRoute>
-                    } />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </TooltipProvider>
+              <ErrorBoundary>
+                <TooltipProvider>
+                  <DataMigration />
+                  <ServiceWorkerHandler />
+                  <Toaster />
+                  <Sonner />
+                  <Suspense fallback={<LoadingFallback />}>
+                    <Routes>
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/settings" element={
+                        <PrivateRoute>
+                          <Settings />
+                        </PrivateRoute>
+                      } />
+                      <Route path="/" element={
+                        <PrivateRoute>
+                          <Index />
+                        </PrivateRoute>
+                      } />
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </Suspense>
+                </TooltipProvider>
+              </ErrorBoundary>
             </BrowserRouter>
           </AuthProvider>
         </QueryClientProvider>

@@ -10,9 +10,11 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { LoadingSpinner, ProjectCardSkeleton } from "@/components/LoadingComponents";
 const Index = () => {
   const [projects, setProjects] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const {
     toast
   } = useToast();
@@ -24,74 +26,89 @@ const Index = () => {
   const navigate = useNavigate();
   useEffect(() => {
     const loadUserProjects = async () => {
-      if (isGuest) {
-        const storedProjects = loadProjects();
-        setProjects(storedProjects);
-      } else if (user) {
-        try {
-          const {
-            data,
-            error
-          } = await supabase.from('projects').select('*').eq('created_by', user.id);
-          if (error) throw error;
-          if (data && data.length > 0) {
-            const transformedProjects: Project[] = data.map(item => ({
-              id: item.id,
-              name: item.name,
-              description: item.description || '',
-              createdAt: item.created_at,
-              users: [],
-              note: '',
-              tags: []
-            }));
-            setProjects(transformedProjects);
-          } else {
+      setIsLoading(true);
+      try {
+        if (isGuest) {
+          const storedProjects = loadProjects();
+          setProjects(storedProjects);
+        } else if (user) {
+          try {
+            const { data, error } = await supabase.from('projects').select('*').eq('created_by', user.id);
+            if (error) throw error;
+            
+            if (data && data.length > 0) {
+              const transformedProjects: Project[] = data.map(item => ({
+                id: item.id,
+                name: item.name,
+                description: item.description || '',
+                createdAt: item.created_at,
+                users: [],
+                note: '',
+                tags: []
+              }));
+              setProjects(transformedProjects);
+            } else {
+              const storedProjects = loadProjects();
+              setProjects(storedProjects);
+            }
+          } catch (error) {
+            console.error('Failed to load projects:', error);
+            toast({
+              title: "Error loading projects",
+              description: "Failed to load your projects from the database",
+              variant: "destructive"
+            });
             const storedProjects = loadProjects();
             setProjects(storedProjects);
           }
-        } catch (error) {
-          console.error('Failed to load projects:', error);
-          toast({
-            title: "Error loading projects",
-            description: "Failed to load your projects from the database",
-            variant: "destructive"
-          });
-          const storedProjects = loadProjects();
-          setProjects(storedProjects);
         }
+      } finally {
+        setIsLoading(false);
       }
     };
+    
     loadUserProjects();
   }, [user, isGuest, toast]);
-  useEffect(() => {
-    const saveUserProjects = async () => {
-      if (projects.length === 0) return;
-      if (isGuest) {
-        saveProjects(projects);
-      } else if (user) {
-        try {
-          saveProjects(projects);
-          for (const project of projects) {
-            const {
-              error
-            } = await supabase.from('projects').upsert({
-              id: project.id,
-              name: project.name,
-              description: project.description,
-              created_by: user.id,
-              note: project.note
-            });
-            if (error) {
-              console.error('Error saving project to Supabase:', error);
+  const debouncedSaveProjects = useCallback(
+    useMemo(() => {
+      let timeoutId: NodeJS.Timeout;
+      return (projectsToSave: Project[]) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(async () => {
+          if (projectsToSave.length === 0) return;
+          
+          if (isGuest) {
+            saveProjects(projectsToSave);
+          } else if (user) {
+            try {
+              saveProjects(projectsToSave);
+              for (const project of projectsToSave) {
+                const { error } = await supabase.from('projects').upsert({
+                  id: project.id,
+                  name: project.name,
+                  description: project.description,
+                  created_by: user.id,
+                  note: project.note
+                });
+                if (error) {
+                  console.error('Error saving project to Supabase:', error);
+                }
+              }
+            } catch (error) {
+              console.error('Failed to save projects to Supabase:', error);
             }
           }
-        } catch (error) {
-          console.error('Failed to save projects to Supabase:', error);
-        }
-      }
-    };
-    saveUserProjects();
-  }, [projects, user, isGuest]);
+        }, 1000);
+      };
+    }, [isGuest, user]),
+    [isGuest, user]
+  );
+
+  useEffect(() => {
+    if (projects.length > 0) {
+      debouncedSaveProjects(projects);
+    }
+  }, [projects, debouncedSaveProjects]);
   const handleProjectCreate = (newProject: Project) => {
     setProjects([...projects, newProject]);
     toast({
@@ -102,28 +119,30 @@ const Index = () => {
   const handleProjectUpdate = useCallback((updatedProject: Project) => {
     setProjects(prev => prev.map(project => project.id === updatedProject.id ? updatedProject : project));
   }, []);
-  const handleProjectDelete = (projectId: string) => {
-    const deleteProject = async () => {
-      setProjects(projects.filter(project => project.id !== projectId));
-      if (user) {
-        try {
-          const {
-            error
-          } = await supabase.from('projects').delete().eq('id', projectId);
-          if (error) throw error;
-        } catch (error) {
-          console.error('Failed to delete project from Supabase:', error);
-        }
+  const handleProjectDelete = useCallback(async (projectId: string) => {
+    setProjects(prev => prev.filter(project => project.id !== projectId));
+    
+    if (user) {
+      try {
+        const { error } = await supabase.from('projects').delete().eq('id', projectId);
+        if (error) throw error;
+      } catch (error) {
+        console.error('Failed to delete project from Supabase:', error);
+        toast({
+          title: "Warning",
+          description: "Project deleted locally but failed to sync with database",
+          variant: "destructive"
+        });
       }
-    };
-    deleteProject();
+    }
+    
     toast({
       title: "Project deleted",
       description: "Your project has been deleted successfully.",
       variant: "destructive"
     });
-  };
-  const handleSignOut = async () => {
+  }, [user, toast]);
+  const handleSignOut = useCallback(async () => {
     try {
       await signOut();
       navigate('/auth');
@@ -134,7 +153,7 @@ const Index = () => {
         variant: "destructive"
       });
     }
-  };
+  }, [signOut, navigate, toast]);
   return <div className="min-h-screen bg-gradient-to-br from-background to-background/95 dark:from-background dark:to-background/90 transition-colors duration-1000">
       <div className="container py-8 max-w-4xl mx-auto px-4">
         <header className="mb-10 text-center">
@@ -158,13 +177,28 @@ const Index = () => {
         </div>
 
         <div className="space-y-5">
-          {projects.length === 0 ? <div className="text-center py-16 bg-muted/5 backdrop-blur-sm rounded-lg border border-dashed border-muted/30">
+          {isLoading ? (
+            Array.from({ length: 3 }, (_, i) => (
+              <ProjectCardSkeleton key={i} expanded={false} />
+            ))
+          ) : projects.length === 0 ? (
+            <div className="text-center py-16 bg-muted/5 backdrop-blur-sm rounded-lg border border-dashed border-muted/30">
               <Zap className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <h3 className="text-xl font-medium mb-2">No projects yet</h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 Create your first project to get started tracking status with our futuristic dashboard
               </p>
-            </div> : projects.map(project => <OptimizedProjectCard key={project.id} project={project} onUpdate={handleProjectUpdate} onDelete={handleProjectDelete} />)}
+            </div>
+          ) : (
+            projects.map(project => 
+              <OptimizedProjectCard 
+                key={project.id} 
+                project={project} 
+                onUpdate={handleProjectUpdate} 
+                onDelete={handleProjectDelete} 
+              />
+            )
+          )}
         </div>
       </div>
       
