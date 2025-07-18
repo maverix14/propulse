@@ -75,30 +75,28 @@ const App = () => {
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <BrowserRouter>
-              <React.Fragment>
-                <TooltipProvider>
-                  <DataMigration />
-                  <ServiceWorkerHandler />
-                  <Toaster />
-                  <Sonner />
-                  <Suspense fallback={<LoadingFallback />}>
-                    <Routes>
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/settings" element={
-                        <PrivateRoute>
-                          <Settings />
-                        </PrivateRoute>
-                      } />
-                      <Route path="/" element={
-                        <PrivateRoute>
-                          <Index />
-                        </PrivateRoute>
-                      } />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                </TooltipProvider>
-              </React.Fragment>
+              <TooltipProvider>
+                <DataMigration />
+                <ServiceWorkerHandler />
+                <Toaster />
+                <Sonner />
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/settings" element={
+                      <PrivateRoute>
+                        <Settings />
+                      </PrivateRoute>
+                    } />
+                    <Route path="/" element={
+                      <PrivateRoute>
+                        <Index />
+                      </PrivateRoute>
+                    } />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </TooltipProvider>
             </BrowserRouter>
           </AuthProvider>
         </QueryClientProvider>

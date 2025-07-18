@@ -53,11 +53,11 @@ export default {
 					foreground: 'hsl(var(--card-foreground))'
 				},
 				status: {
-					1: '#ef4444',
-					2: '#f97316',
-					3: '#facc15',
-					4: '#84cc16',
-					5: '#22c55e'
+					1: 'hsl(0 84% 60%)',
+					2: 'hsl(24 95% 53%)', 
+					3: 'hsl(45 93% 47%)',
+					4: 'hsl(84 81% 44%)',
+					5: 'hsl(142 71% 45%)'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',

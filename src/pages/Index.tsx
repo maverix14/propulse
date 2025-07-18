@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { Project } from "@/types";
 import { loadProjects, saveProjects } from "@/utils/storageUtils";
-import { ProjectCard } from "@/components/ProjectCard";
+import { OptimizedProjectCard } from "@/components/OptimizedProjectCard";
 import { NewProjectDialog } from "@/components/NewProjectDialog";
 import { Zap, Settings, Info } from "lucide-react";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -99,9 +99,9 @@ const Index = () => {
       description: "Your new project has been created successfully."
     });
   };
-  const handleProjectUpdate = (updatedProject: Project) => {
-    setProjects(projects.map(project => project.id === updatedProject.id ? updatedProject : project));
-  };
+  const handleProjectUpdate = useCallback((updatedProject: Project) => {
+    setProjects(prev => prev.map(project => project.id === updatedProject.id ? updatedProject : project));
+  }, []);
   const handleProjectDelete = (projectId: string) => {
     const deleteProject = async () => {
       setProjects(projects.filter(project => project.id !== projectId));
@@ -164,32 +164,21 @@ const Index = () => {
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 Create your first project to get started tracking status with our futuristic dashboard
               </p>
-            </div> : projects.map(project => <ProjectCard key={project.id} project={project} onUpdate={handleProjectUpdate} onDelete={handleProjectDelete} />)}
+            </div> : projects.map(project => <OptimizedProjectCard key={project.id} project={project} onUpdate={handleProjectUpdate} onDelete={handleProjectDelete} />)}
         </div>
       </div>
       
       <footer className="py-6 border-t border-border/40 mt-10">
         <div className="container max-w-4xl mx-auto px-4">
           <div className="flex justify-center items-center gap-4">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="rounded-full">
-                    <Settings className="h-5 w-5" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Settings</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-            
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  
-                </TooltipTrigger>
-                <TooltipContent>About</TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" onClick={() => navigate('/settings')} className="rounded-full">
+                  <Settings className="h-5 w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Settings</TooltipContent>
+            </Tooltip>
           </div>
           
         </div>
