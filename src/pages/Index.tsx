@@ -33,9 +33,11 @@ const Index = () => {
           setProjects(storedProjects);
         } else if (user) {
           try {
-            const { data, error } = await supabase.from('projects').select('*').eq('created_by', user.id);
+            const {
+              data,
+              error
+            } = await supabase.from('projects').select('*').eq('created_by', user.id);
             if (error) throw error;
-            
             if (data && data.length > 0) {
               const transformedProjects: Project[] = data.map(item => ({
                 id: item.id,
@@ -66,44 +68,40 @@ const Index = () => {
         setIsLoading(false);
       }
     };
-    
     loadUserProjects();
   }, [user, isGuest, toast]);
-  const debouncedSaveProjects = useCallback(
-    useMemo(() => {
-      let timeoutId: NodeJS.Timeout;
-      return (projectsToSave: Project[]) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(async () => {
-          if (projectsToSave.length === 0) return;
-          
-          if (isGuest) {
+  const debouncedSaveProjects = useCallback(useMemo(() => {
+    let timeoutId: NodeJS.Timeout;
+    return (projectsToSave: Project[]) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(async () => {
+        if (projectsToSave.length === 0) return;
+        if (isGuest) {
+          saveProjects(projectsToSave);
+        } else if (user) {
+          try {
             saveProjects(projectsToSave);
-          } else if (user) {
-            try {
-              saveProjects(projectsToSave);
-              for (const project of projectsToSave) {
-                const { error } = await supabase.from('projects').upsert({
-                  id: project.id,
-                  name: project.name,
-                  description: project.description,
-                  created_by: user.id,
-                  note: project.note
-                });
-                if (error) {
-                  console.error('Error saving project to Supabase:', error);
-                }
+            for (const project of projectsToSave) {
+              const {
+                error
+              } = await supabase.from('projects').upsert({
+                id: project.id,
+                name: project.name,
+                description: project.description,
+                created_by: user.id,
+                note: project.note
+              });
+              if (error) {
+                console.error('Error saving project to Supabase:', error);
               }
-            } catch (error) {
-              console.error('Failed to save projects to Supabase:', error);
             }
+          } catch (error) {
+            console.error('Failed to save projects to Supabase:', error);
           }
-        }, 1000);
-      };
-    }, [isGuest, user]),
-    [isGuest, user]
-  );
-
+        }
+      }, 1000);
+    };
+  }, [isGuest, user]), [isGuest, user]);
   useEffect(() => {
     if (projects.length > 0) {
       debouncedSaveProjects(projects);
@@ -121,10 +119,11 @@ const Index = () => {
   }, []);
   const handleProjectDelete = useCallback(async (projectId: string) => {
     setProjects(prev => prev.filter(project => project.id !== projectId));
-    
     if (user) {
       try {
-        const { error } = await supabase.from('projects').delete().eq('id', projectId);
+        const {
+          error
+        } = await supabase.from('projects').delete().eq('id', projectId);
         if (error) throw error;
       } catch (error) {
         console.error('Failed to delete project from Supabase:', error);
@@ -135,7 +134,6 @@ const Index = () => {
         });
       }
     }
-    
     toast({
       title: "Project deleted",
       description: "Your project has been deleted successfully.",
@@ -163,8 +161,7 @@ const Index = () => {
           <h1 className="text-4xl font-bold mb-2 bg-clip-text text-transparent bg-gradient-to-r from-zinc-700 via-zinc-500 to-zinc-600 dark:from-zinc-300 dark:via-zinc-400 dark:to-zinc-500">
             <span className="inline-flex items-center">ProPulsio</span>
           </h1>
-          <p className="text-muted-foreground text-lg max-w-md mx-auto">Track every pulse of your projects
-- v0.1</p>
+          <p className="text-muted-foreground text-lg max-w-md mx-auto">Track every pulse of your projects - v0.2</p>
           {isGuest ? <Button variant="outline" size="sm" className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800" onClick={() => navigate('/auth')}>
               Guest Mode
             </Button> : <Button variant="outline" size="sm" className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20">
@@ -177,28 +174,15 @@ const Index = () => {
         </div>
 
         <div className="space-y-5">
-          {isLoading ? (
-            Array.from({ length: 3 }, (_, i) => (
-              <ProjectCardSkeleton key={i} expanded={false} />
-            ))
-          ) : projects.length === 0 ? (
-            <div className="text-center py-16 bg-muted/5 backdrop-blur-sm rounded-lg border border-dashed border-muted/30">
+          {isLoading ? Array.from({
+          length: 3
+        }, (_, i) => <ProjectCardSkeleton key={i} expanded={false} />) : projects.length === 0 ? <div className="text-center py-16 bg-muted/5 backdrop-blur-sm rounded-lg border border-dashed border-muted/30">
               <Zap className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <h3 className="text-xl font-medium mb-2">No projects yet</h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 Create your first project to get started tracking status with our futuristic dashboard
               </p>
-            </div>
-          ) : (
-            projects.map(project => 
-              <OptimizedProjectCard 
-                key={project.id} 
-                project={project} 
-                onUpdate={handleProjectUpdate} 
-                onDelete={handleProjectDelete} 
-              />
-            )
-          )}
+            </div> : projects.map(project => <OptimizedProjectCard key={project.id} project={project} onUpdate={handleProjectUpdate} onDelete={handleProjectDelete} />)}
         </div>
       </div>
       
