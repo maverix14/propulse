@@ -29,15 +29,15 @@ const Index = () => {
         if (isGuest) {
           setProjects(loadProjects());
         } else if (user) {
-          const { data, error } = await supabase
-            .from('projects')
-            .select('*')
-            .eq('created_by', user.id);
+          const { data, error } = await supabase.
+          from('projects').
+          select('*').
+          eq('created_by', user.id);
 
           if (error) throw error;
 
           if (data && data.length > 0) {
-            setProjects(data.map(item => ({
+            setProjects(data.map((item) => ({
               id: item.id,
               name: item.name,
               description: item.description || '',
@@ -94,7 +94,7 @@ const Index = () => {
   }, [projects]);
 
   const handleProjectCreate = useCallback((newProject: Project) => {
-    setProjects(prev => [...prev, newProject]);
+    setProjects((prev) => [...prev, newProject]);
     toast({
       title: "Project created",
       description: "Your new project has been created successfully."
@@ -102,11 +102,11 @@ const Index = () => {
   }, [toast]);
 
   const handleProjectUpdate = useCallback((updatedProject: Project) => {
-    setProjects(prev => prev.map(p => p.id === updatedProject.id ? updatedProject : p));
+    setProjects((prev) => prev.map((p) => p.id === updatedProject.id ? updatedProject : p));
   }, []);
 
   const handleProjectDelete = useCallback(async (projectId: string) => {
-    setProjects(prev => prev.filter(p => p.id !== projectId));
+    setProjects((prev) => prev.filter((p) => p.id !== projectId));
     if (user) {
       try {
         const { error } = await supabase.from('projects').delete().eq('id', projectId);
@@ -133,15 +133,15 @@ const Index = () => {
             <span className="inline-flex items-center">ProPulsio</span>
           </h1>
           <p className="text-muted-foreground text-lg max-w-md mx-auto">Track every pulse of your projects - v0.2</p>
-          {isGuest ? (
-            <Button variant="outline" size="sm" className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-border hover:bg-muted" onClick={() => navigate('/auth')}>
+          {isGuest ?
+          <Button variant="outline" size="sm" className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-border hover:bg-muted" onClick={() => navigate('/auth')}>
               Guest Mode
-            </Button>
-          ) : (
-            <Button variant="outline" size="sm" className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-primary/30 text-primary hover:bg-primary/5">
+            </Button> :
+
+          <Button variant="outline" size="sm" className="mt-4 text-xs px-3 py-1 h-7 rounded-full border-primary/30 text-primary hover:bg-primary/5">
               Online
             </Button>
-          )}
+          }
         </header>
 
         <div className="mb-6 flex justify-center">
@@ -149,26 +149,26 @@ const Index = () => {
         </div>
 
         <div className="space-y-5">
-          {isLoading ? (
-            Array.from({ length: 3 }, (_, i) => <ProjectCardSkeleton key={i} expanded={false} />)
-          ) : projects.length === 0 ? (
-            <div className="text-center py-16 bg-muted/5 backdrop-blur-sm rounded-lg border border-dashed border-muted/30">
+          {isLoading ?
+          Array.from({ length: 3 }, (_, i) => <ProjectCardSkeleton key={i} expanded={false} />) :
+          projects.length === 0 ?
+          <div className="text-center py-16 bg-muted/5 backdrop-blur-sm rounded-lg border border-dashed border-muted/30">
               <Zap className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
               <h3 className="text-xl font-medium mb-2">No projects yet</h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
                 Create your first project to get started tracking status with our futuristic dashboard
               </p>
-            </div>
-          ) : (
-            projects.map(project => (
-              <OptimizedProjectCard
-                key={project.id}
-                project={project}
-                onUpdate={handleProjectUpdate}
-                onDelete={handleProjectDelete}
-              />
-            ))
-          )}
+            </div> :
+
+          projects.map((project) =>
+          <OptimizedProjectCard
+            key={project.id}
+            project={project}
+            onUpdate={handleProjectUpdate}
+            onDelete={handleProjectDelete} />
+
+          )
+          }
         </div>
       </div>
       
@@ -186,8 +186,8 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>);
+
 };
 
 export default Index;
