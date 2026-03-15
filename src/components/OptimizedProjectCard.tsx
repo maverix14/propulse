@@ -6,6 +6,7 @@ import { ProjectNotes } from "./ProjectNotes";
 import { IntegrationUsernames } from "./project/IntegrationUsernames";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { getCurrentDate, getCurrentMonth } from "@/utils/dateUtils";
 
 interface ProjectCardProps {
   project: Project;
@@ -24,6 +25,9 @@ export const OptimizedProjectCard = React.memo(({
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const { toast } = useToast();
 
+  const currentDate = getCurrentDate();
+  const currentMonth = getCurrentMonth();
+
   const handleExpand = useCallback(() => {
     setExpanded(prev => !prev);
   }, []);
@@ -36,21 +40,16 @@ export const OptimizedProjectCard = React.memo(({
   const handleDeleteConfirm = useCallback(() => {
     onDelete(project.id);
     setDeleteDialogOpen(false);
-    toast({
-      title: "Project deleted",
-      description: "Your project has been deleted successfully.",
-      variant: "destructive",
-    });
-  }, [project.id, onDelete, toast]);
+  }, [project.id, onDelete]);
 
   const handleStatusChange = useCallback((userId: string, value: StatusLevel) => {
     const updatedUsers = project.users?.map(user => 
       user.id === userId 
-        ? { ...user, dailyStatus: { ...user.dailyStatus, [new Date().toISOString().split('T')[0]]: value } }
+        ? { ...user, dailyStatus: { ...user.dailyStatus, [currentDate]: value } }
         : user
     ) || [];
     onUpdate({ ...project, users: updatedUsers });
-  }, [project, onUpdate]);
+  }, [project, onUpdate, currentDate]);
 
   const handleNoteChange = useCallback((userId: string, note: string) => {
     const updatedUsers = project.users?.map(user => 
@@ -70,17 +69,15 @@ export const OptimizedProjectCard = React.memo(({
     }
   }, [project, onUpdate, selectedUser]);
 
-  const currentDate = new Date().toISOString().split('T')[0];
-  const currentMonth = new Date().toISOString().substring(0, 7);
   const userCount = project.users?.length || 0;
   const dailyStatusSum = project.users?.reduce((sum, user) => 
     sum + (user.dailyStatus?.[currentDate] || 0), 0
   ) || 0;
 
   const memoizedUsers = useMemo(() => 
-    project.users?.map((user, index) => (
+    project.users?.map((user) => (
       <UserStatusCard
-        key={`${user.username}-${index}`}
+        key={user.id}
         user={user}
         currentDate={currentDate}
         currentMonth={currentMonth}

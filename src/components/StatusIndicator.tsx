@@ -1,4 +1,3 @@
-
 import { cn } from "@/lib/utils";
 
 interface StatusIndicatorProps {
@@ -12,18 +11,19 @@ export const StatusIndicator = ({
   size = "md", 
   showGlow = true 
 }: StatusIndicatorProps) => {
-  // Handle 0 status differently
+  const sizeClasses = {
+    sm: "w-6 h-6 text-xs",
+    md: "w-8 h-8 text-sm",
+    lg: "w-10 h-10 text-base"
+  };
+
   if (value === 0) {
     return (
       <div className="relative">
         <div 
           className={cn(
-            "rounded-md flex items-center justify-center font-mono font-bold text-gray-400 shadow-md transition-all duration-300 hover:scale-105 border border-gray-200 dark:border-gray-700",
-            {
-              "w-6 h-6 text-xs": size === "sm",
-              "w-8 h-8 text-sm": size === "md",
-              "w-10 h-10 text-base": size === "lg"
-            }
+            "rounded-md flex items-center justify-center font-mono font-bold text-muted-foreground shadow-md transition-all duration-300 hover:scale-105 border border-border",
+            sizeClasses[size]
           )}
         >
           0
@@ -33,12 +33,6 @@ export const StatusIndicator = ({
   }
   
   const statusValue = Math.max(1, Math.min(5, Math.round(value))) as 1 | 2 | 3 | 4 | 5;
-  
-  const sizeClasses = {
-    sm: "w-6 h-6 text-xs",
-    md: "w-8 h-8 text-sm",
-    lg: "w-10 h-10 text-base"
-  };
 
   const statusColors = {
     1: "bg-status-1",
@@ -52,7 +46,7 @@ export const StatusIndicator = ({
     <div className="relative">
       <div 
         className={cn(
-          "rounded-md flex items-center justify-center font-mono font-bold text-white shadow-md transition-all duration-300 hover:scale-105",
+          "rounded-md flex items-center justify-center font-mono font-bold text-primary-foreground shadow-md transition-all duration-300 hover:scale-105",
           sizeClasses[size],
           statusColors[statusValue],
           "dark:shadow-lg dark:shadow-status-1/10"

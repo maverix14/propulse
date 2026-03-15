@@ -1,9 +1,7 @@
-
 import { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { StickyNote } from 'lucide-react';
 import { Project } from '@/types';
-import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 import { PillTextField } from './project/PillTextField';
 
@@ -19,13 +17,8 @@ export const ProjectNotes = ({ project, onUpdate, isExpanded }: ProjectNotesProp
   const { toast } = useToast();
 
   const handleSaveNote = () => {
-    // Only update if there's been a change
     if (noteText !== project.note) {
-      const updatedProject = {
-        ...project,
-        note: noteText
-      };
-      onUpdate(updatedProject);
+      onUpdate({ ...project, note: noteText });
       toast({
         title: "Note updated",
         description: "Project note has been saved",
@@ -44,7 +37,7 @@ export const ProjectNotes = ({ project, onUpdate, isExpanded }: ProjectNotesProp
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
             placeholder="Add notes about this project..."
-            className="min-h-[100px] max-h-[200px] bg-background text-foreground dark:text-white"
+            className="min-h-[100px] max-h-[200px] bg-background text-foreground"
             onBlur={handleSaveNote}
             autoFocus
           />
