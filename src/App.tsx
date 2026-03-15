@@ -71,40 +71,38 @@ const ServiceWorkerHandler = () => {
 // Main App component
 const App = () => {
   return (
-    <React.StrictMode>
-      <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <BrowserRouter>
-              <ErrorBoundary>
-                <TooltipProvider>
-                  <DataMigration />
-                  <ServiceWorkerHandler />
-                  <Toaster />
-                  <Sonner />
-                  <Suspense fallback={<LoadingFallback />}>
-                    <Routes>
-                      <Route path="/auth" element={<Auth />} />
-                      <Route path="/settings" element={
-                        <PrivateRoute>
-                          <Settings />
-                        </PrivateRoute>
-                      } />
-                      <Route path="/" element={
-                        <PrivateRoute>
-                          <Index />
-                        </PrivateRoute>
-                      } />
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </Suspense>
-                </TooltipProvider>
-              </ErrorBoundary>
-            </BrowserRouter>
-          </AuthProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </React.StrictMode>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <BrowserRouter>
+            <ErrorBoundary>
+              <TooltipProvider>
+                <DataMigration />
+                <ServiceWorkerHandler />
+                <Toaster />
+                <Sonner />
+                <Suspense fallback={<LoadingFallback />}>
+                  <Routes>
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/settings" element={
+                      <PrivateRoute>
+                        <Settings />
+                      </PrivateRoute>
+                    } />
+                    <Route path="/" element={
+                      <PrivateRoute>
+                        <Index />
+                      </PrivateRoute>
+                    } />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </TooltipProvider>
+            </ErrorBoundary>
+          </BrowserRouter>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 
