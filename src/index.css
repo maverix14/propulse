@@ -87,14 +87,29 @@
 @layer base {
   * {
     @apply border-border;
+    transition: border-color 3s ease, background-color 3s ease, color 3s ease;
   }
   
   body {
-    @apply bg-background text-foreground transition-colors duration-3000;
+    @apply text-foreground;
+    position: relative;
+    background-color: hsl(var(--background));
+    transition: background-color 3s ease;
+  }
+  
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--background)/95) 100%);
+    z-index: -1;
+    transition: opacity 3s ease, background 3s ease;
   }
 
-  body.light {
+  body.light::before {
     background: linear-gradient(180deg, #f8f8f8 0%, #f3f3f3 100%);
   }
 }

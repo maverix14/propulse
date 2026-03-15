@@ -29,15 +29,14 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!isInitialized) return;
     
-    // Apply theme to document with transition
-    document.documentElement.style.setProperty('transition', 'background-color 3s ease');
-    
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
       document.documentElement.classList.remove("light");
+      document.body.classList.remove("light");
     } else {
       document.documentElement.classList.remove("dark");
       document.documentElement.classList.add("light");
+      document.body.classList.add("light");
     }
     
     localStorage.setItem("project-pulse-theme", theme);
