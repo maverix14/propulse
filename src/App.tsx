@@ -54,7 +54,7 @@ const App = () => {
         <BrowserRouter>
           <ErrorBoundary>
             <TooltipProvider>
-              <DataMigration />
+              
               <ServiceWorkerHandler />
               <Toaster />
               <Sonner />
