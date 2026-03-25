@@ -6,19 +6,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./components/ThemeProvider";
-import { AuthProvider } from "./contexts/AuthContext";
-import { useAuth } from "./contexts/AuthContext";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { DataMigration } from "./components/DataMigration";
 import { Suspense, lazy } from "react";
 
-// Lazily load page components
 const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Settings = lazy(() => import("./pages/Settings"));
 
-// Create QueryClient instance outside of the component
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -28,7 +23,6 @@ const queryClient = new QueryClient({
   }
 });
 
-// Loading component to show while lazy components load
 const LoadingFallback = () => (
   <div className="flex items-center justify-center h-screen">
     <div className="animate-pulse text-center">
@@ -38,20 +32,6 @@ const LoadingFallback = () => (
   </div>
 );
 
-// Modified route protection that allows guest access
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isInitialized } = useAuth();
-  
-  // Show loading until authentication is initialized
-  if (!isInitialized) {
-    return <LoadingFallback />;
-  }
-  
-  // Allow all users (including guests) to access the route
-  return <>{children}</>;
-};
-
-// Component to handle service worker registration
 const ServiceWorkerHandler = () => {
   React.useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -68,39 +48,27 @@ const ServiceWorkerHandler = () => {
   return null;
 };
 
-// Main App component
 const App = () => {
   return (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <BrowserRouter>
-            <ErrorBoundary>
-              <TooltipProvider>
-                <DataMigration />
-                <ServiceWorkerHandler />
-                <Toaster />
-                <Sonner />
-                <Suspense fallback={<LoadingFallback />}>
-                  <Routes>
-                    <Route path="/auth" element={<Auth />} />
-                    <Route path="/settings" element={
-                      <PrivateRoute>
-                        <Settings />
-                      </PrivateRoute>
-                    } />
-                    <Route path="/" element={
-                      <PrivateRoute>
-                        <Index />
-                      </PrivateRoute>
-                    } />
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Suspense>
-              </TooltipProvider>
-            </ErrorBoundary>
-          </BrowserRouter>
-        </AuthProvider>
+        <BrowserRouter>
+          <ErrorBoundary>
+            <TooltipProvider>
+              <DataMigration />
+              <ServiceWorkerHandler />
+              <Toaster />
+              <Sonner />
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/" element={<Index />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
+            </TooltipProvider>
+          </ErrorBoundary>
+        </BrowserRouter>
       </QueryClientProvider>
     </ThemeProvider>
   );
