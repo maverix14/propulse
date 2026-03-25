@@ -5,8 +5,14 @@ import { ProjectHeader, ProjectActions, UserStatusCard, UserLevelDialog } from "
 import { ProjectNotes } from "./ProjectNotes";
 import { IntegrationUsernames } from "./project/IntegrationUsernames";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Label } from "./ui/label";
+import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentDate, getCurrentMonth } from "@/utils/dateUtils";
+import { Plus, Trash2 } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 
 interface ProjectCardProps {
   project: Project;
@@ -23,6 +29,8 @@ export const OptimizedProjectCard = React.memo(({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userLevelDialogOpen, setUserLevelDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
+  const [addUserDialogOpen, setAddUserDialogOpen] = useState(false);
+  const [newUsername, setNewUsername] = useState("");
   const { toast } = useToast();
 
   const currentDate = getCurrentDate();
@@ -69,6 +77,28 @@ export const OptimizedProjectCard = React.memo(({
     }
   }, [project, onUpdate, selectedUser]);
 
+  const handleAddUser = useCallback(() => {
+    if (!newUsername.trim()) return;
+    const newUser: UserType = {
+      id: uuidv4(),
+      username: newUsername.trim(),
+      level: UserLevel.Level1,
+      dailyStatus: {},
+      monthlyStatus: {},
+      note: "",
+    };
+    onUpdate({ ...project, users: [...(project.users || []), newUser] });
+    setNewUsername("");
+    setAddUserDialogOpen(false);
+    toast({ title: "User added", description: `${newUser.username} has been added.` });
+  }, [newUsername, project, onUpdate, toast]);
+
+  const handleRemoveUser = useCallback((userId: string) => {
+    const updatedUsers = (project.users || []).filter(u => u.id !== userId);
+    onUpdate({ ...project, users: updatedUsers });
+    toast({ title: "User removed", variant: "destructive" });
+  }, [project, onUpdate, toast]);
+
   const userCount = project.users?.length || 0;
   const dailyStatusSum = project.users?.reduce((sum, user) => 
     sum + (user.dailyStatus?.[currentDate] || 0), 0
@@ -114,14 +144,21 @@ export const OptimizedProjectCard = React.memo(({
               
               <IntegrationUsernames project={project} onUpdate={onUpdate} />
               
-              {project.users && project.users.length > 0 && (
-                <div className="space-y-3">
-                  <h4 className="font-medium text-sm text-muted-foreground">User Status</h4>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-medium text-sm text-muted-foreground">Users</h4>
+                  <Button variant="outline" size="sm" className="gap-1" onClick={() => setAddUserDialogOpen(true)}>
+                    <Plus className="h-3.5 w-3.5" /> Add User
+                  </Button>
+                </div>
+                {project.users && project.users.length > 0 ? (
                   <div className="grid gap-3">
                     {memoizedUsers}
                   </div>
-                </div>
-              )}
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-4">No users assigned yet</p>
+                )}
+              </div>
             </div>
           )}
         </CardContent>
@@ -148,6 +185,30 @@ export const OptimizedProjectCard = React.memo(({
         selectedUser={selectedUser}
         onUpdateUserLevel={handleUserLevelChange}
       />
+
+      <Dialog open={addUserDialogOpen} onOpenChange={setAddUserDialogOpen}>
+        <DialogContent className="sm:max-w-[350px]">
+          <form onSubmit={(e) => { e.preventDefault(); handleAddUser(); }}>
+            <DialogHeader>
+              <DialogTitle>Add User</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                placeholder="Enter username"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+                required
+                autoFocus
+              />
+            </div>
+            <DialogFooter>
+              <Button type="submit">Add</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 });
