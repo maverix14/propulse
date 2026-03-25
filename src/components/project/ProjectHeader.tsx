@@ -115,7 +115,7 @@ export const ProjectHeader = ({
             <CardTitle className="font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent dark:from-primary dark:to-primary/60">
               {project.name}
             </CardTitle>
-            <CardDescription className="mt-1">{project.description}</CardDescription>
+            
           </div>
         </div>
         
